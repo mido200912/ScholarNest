@@ -45,7 +45,7 @@ interface AppEntry {
 export default function Dashboard() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches'>('saved');
+  const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches' | 'mysubmissions'>('saved');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [applications, setApplications] = useState<{ saved: AppEntry[]; applying: AppEntry[]; accepted: AppEntry[] }>({
     saved: [], applying: [], accepted: []
