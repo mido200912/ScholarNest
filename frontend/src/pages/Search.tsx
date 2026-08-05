@@ -45,7 +45,7 @@ export default function Search() {
     setLoading(true);
     setVisibleCount(5);
     try {
-      const { data } = await axios.get(`${API}/scholarships?search=${searchQuery}&limit=100`);
+      const { data } = await axios.get(`${API}/scholarships?search=${searchQuery}`);
       setScholarships(data.data);
     } catch (error) {
       console.error('Error fetching scholarships:', error);

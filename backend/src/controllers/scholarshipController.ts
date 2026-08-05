@@ -11,7 +11,7 @@ import { sendScholarshipNotification, sendNewScholarshipEmail } from '../service
 // @access  Public
 export const getScholarships = async (req: Request, res: Response) => {
   try {
-    const { search, country, degree, fundingType, limit = 10, page = 1 } = req.query;
+    const { search, country, degree, fundingType } = req.query;
     
     // Only show approved scholarships
     let query: any = { status: 'approved' };
@@ -39,14 +39,7 @@ export const getScholarships = async (req: Request, res: Response) => {
     if (degree) query.degree = degree;
     if (fundingType) query.fundingType = fundingType;
 
-    // 3. Pagination
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
-    const skip = (pageNum - 1) * limitNum;
-
     const scholarships = await Scholarship.find(query)
-      .skip(skip)
-      .limit(limitNum)
       .sort({ createdAt: -1 });
 
     const total = await Scholarship.countDocuments(query);
@@ -56,8 +49,6 @@ export const getScholarships = async (req: Request, res: Response) => {
       data: scholarships,
       pagination: {
         total,
-        page: pageNum,
-        pages: Math.ceil(total / limitNum),
       }
     });
   } catch (error: any) {
