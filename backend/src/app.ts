@@ -10,7 +10,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? 'your_production_url' : 'http://localhost:5173',
+    origin: process.env.NODE_ENV === 'production' ? 'https://scholar-nest-1.vercel.app' : 'http://localhost:5173',
     credentials: true,
   })
 );

@@ -11,7 +11,7 @@ import { useCompareStore } from '../store/compareStore';
 import { useToast } from '../components/ui/Toast';
 import axios from 'axios';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://scholar-nest-1.vercel.app/api';
 
 interface Scholarship {
   _id: string;

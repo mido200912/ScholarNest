@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://scholar-nest-1.vercel.app/api';
 
 export default function InterviewSimulator() {
   const { user } = useAuthStore();

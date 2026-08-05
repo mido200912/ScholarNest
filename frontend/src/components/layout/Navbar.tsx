@@ -20,7 +20,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (user && token) {
-      axios.get('http://localhost:5000/api/notifications', {
+      axios.get('https://scholar-nest-1.vercel.app/api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => setNotifications(res.data.data)).catch(console.error);
     }
@@ -29,7 +29,7 @@ export default function Navbar() {
   const markAllAsRead = async () => {
     if (!token) return;
     try {
-      await axios.put('http://localhost:5000/api/notifications/all/read', {}, {
+      await axios.put('https://scholar-nest-1.vercel.app/api/notifications/all/read', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));

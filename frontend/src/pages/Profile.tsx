@@ -9,7 +9,7 @@ import { Label } from '../components/ui/label';
 import { useToast } from '../components/ui/Toast';
 import axios from 'axios';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://scholar-nest-1.vercel.app/api';
 
 export default function Profile() {
   const { user, setUser } = useAuthStore();

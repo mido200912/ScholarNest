@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://scholar-nest-1.vercel.app/api';
 
 export default function Compare() {
   const { scholarships, removeScholarship, clearCompare } = useCompareStore();

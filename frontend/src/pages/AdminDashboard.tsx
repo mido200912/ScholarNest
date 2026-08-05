@@ -13,7 +13,7 @@ import {
   Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil
 } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://scholar-nest-1.vercel.app/api';
 
 // ── JSON Schema Template ────────────────────────────────────────────────────
 const JSON_TEMPLATE = `[

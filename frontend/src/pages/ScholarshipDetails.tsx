@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/ui/Toast';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://scholar-nest-1.vercel.app/api';
 
 interface Scholarship {
   _id: string;
@@ -268,7 +268,7 @@ export default function ScholarshipDetails() {
               if (!newComment.trim()) return;
               setCommentLoading(true);
               try {
-                const { data } = await axios.post(`http://localhost:5000/api/comments/${id}`, 
+                const { data } = await axios.post(`https://scholar-nest-1.vercel.app/api/comments/${id}`, 
                   { text: newComment }, 
                   { headers: { Authorization: `Bearer ${useAuthStore.getState().user?.token}` } }
                 );
