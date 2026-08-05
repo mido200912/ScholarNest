@@ -1,0 +1,1701 @@
+[
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 1",
+      "ar": "منحة التميز العالمية 1"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "USA",
+      "ar": "الولايات المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 1",
+      "ar": "جامعة التميز 1"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-06T22:11:36.093Z",
+    "link": "https://example.com/scholarship-1",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 2",
+      "ar": "منحة التميز العالمية 2"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "UK",
+      "ar": "المملكة المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 2",
+      "ar": "جامعة التميز 2"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-10-02T03:31:34.551Z",
+    "link": "https://example.com/scholarship-2",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 3",
+      "ar": "منحة التميز العالمية 3"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Canada",
+      "ar": "كندا"
+    },
+    "university": {
+      "en": "University of Excellence 3",
+      "ar": "جامعة التميز 3"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-09-07T20:29:20.767Z",
+    "link": "https://example.com/scholarship-3",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 4",
+      "ar": "منحة التميز العالمية 4"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Germany",
+      "ar": "ألمانيا"
+    },
+    "university": {
+      "en": "University of Excellence 4",
+      "ar": "جامعة التميز 4"
+    },
+    "degree": "Other",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-11T01:12:21.371Z",
+    "link": "https://example.com/scholarship-4",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 5",
+      "ar": "منحة التميز العالمية 5"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Australia",
+      "ar": "أستراليا"
+    },
+    "university": {
+      "en": "University of Excellence 5",
+      "ar": "جامعة التميز 5"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-24T02:53:31.423Z",
+    "link": "https://example.com/scholarship-5",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 6",
+      "ar": "منحة التميز العالمية 6"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Japan",
+      "ar": "اليابان"
+    },
+    "university": {
+      "en": "University of Excellence 6",
+      "ar": "جامعة التميز 6"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-09-12T20:03:20.995Z",
+    "link": "https://example.com/scholarship-6",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 7",
+      "ar": "منحة التميز العالمية 7"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Turkey",
+      "ar": "تركيا"
+    },
+    "university": {
+      "en": "University of Excellence 7",
+      "ar": "جامعة التميز 7"
+    },
+    "degree": "PhD",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-11-11T11:54:13.032Z",
+    "link": "https://example.com/scholarship-7",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 8",
+      "ar": "منحة التميز العالمية 8"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Egypt",
+      "ar": "مصر"
+    },
+    "university": {
+      "en": "University of Excellence 8",
+      "ar": "جامعة التميز 8"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-06T12:35:03.560Z",
+    "link": "https://example.com/scholarship-8",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 9",
+      "ar": "منحة التميز العالمية 9"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Qatar",
+      "ar": "قطر"
+    },
+    "university": {
+      "en": "University of Excellence 9",
+      "ar": "جامعة التميز 9"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-09-22T20:53:27.213Z",
+    "link": "https://example.com/scholarship-9",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 10",
+      "ar": "منحة التميز العالمية 10"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "USA",
+      "ar": "الولايات المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 10",
+      "ar": "جامعة التميز 10"
+    },
+    "degree": "Master",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-29T06:45:10.047Z",
+    "link": "https://example.com/scholarship-10",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 11",
+      "ar": "منحة التميز العالمية 11"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "UK",
+      "ar": "المملكة المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 11",
+      "ar": "جامعة التميز 11"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-09-06T04:08:22.826Z",
+    "link": "https://example.com/scholarship-11",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 12",
+      "ar": "منحة التميز العالمية 12"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Canada",
+      "ar": "كندا"
+    },
+    "university": {
+      "en": "University of Excellence 12",
+      "ar": "جامعة التميز 12"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-08-09T10:03:00.425Z",
+    "link": "https://example.com/scholarship-12",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 13",
+      "ar": "منحة التميز العالمية 13"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Germany",
+      "ar": "ألمانيا"
+    },
+    "university": {
+      "en": "University of Excellence 13",
+      "ar": "جامعة التميز 13"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-08-08T05:47:43.996Z",
+    "link": "https://example.com/scholarship-13",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 14",
+      "ar": "منحة التميز العالمية 14"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Australia",
+      "ar": "أستراليا"
+    },
+    "university": {
+      "en": "University of Excellence 14",
+      "ar": "جامعة التميز 14"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-08-05T10:15:42.325Z",
+    "link": "https://example.com/scholarship-14",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 15",
+      "ar": "منحة التميز العالمية 15"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Japan",
+      "ar": "اليابان"
+    },
+    "university": {
+      "en": "University of Excellence 15",
+      "ar": "جامعة التميز 15"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-10-21T04:34:41.837Z",
+    "link": "https://example.com/scholarship-15",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 16",
+      "ar": "منحة التميز العالمية 16"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Turkey",
+      "ar": "تركيا"
+    },
+    "university": {
+      "en": "University of Excellence 16",
+      "ar": "جامعة التميز 16"
+    },
+    "degree": "Other",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-07T10:11:23.536Z",
+    "link": "https://example.com/scholarship-16",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 17",
+      "ar": "منحة التميز العالمية 17"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Egypt",
+      "ar": "مصر"
+    },
+    "university": {
+      "en": "University of Excellence 17",
+      "ar": "جامعة التميز 17"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-24T13:59:49.633Z",
+    "link": "https://example.com/scholarship-17",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 18",
+      "ar": "منحة التميز العالمية 18"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Qatar",
+      "ar": "قطر"
+    },
+    "university": {
+      "en": "University of Excellence 18",
+      "ar": "جامعة التميز 18"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-10-05T12:12:28.491Z",
+    "link": "https://example.com/scholarship-18",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 19",
+      "ar": "منحة التميز العالمية 19"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "USA",
+      "ar": "الولايات المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 19",
+      "ar": "جامعة التميز 19"
+    },
+    "degree": "PhD",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-11-02T23:42:26.853Z",
+    "link": "https://example.com/scholarship-19",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 20",
+      "ar": "منحة التميز العالمية 20"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "UK",
+      "ar": "المملكة المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 20",
+      "ar": "جامعة التميز 20"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-08-04T22:31:19.364Z",
+    "link": "https://example.com/scholarship-20",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 21",
+      "ar": "منحة التميز العالمية 21"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Canada",
+      "ar": "كندا"
+    },
+    "university": {
+      "en": "University of Excellence 21",
+      "ar": "جامعة التميز 21"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-09-14T11:17:38.844Z",
+    "link": "https://example.com/scholarship-21",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 22",
+      "ar": "منحة التميز العالمية 22"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Germany",
+      "ar": "ألمانيا"
+    },
+    "university": {
+      "en": "University of Excellence 22",
+      "ar": "جامعة التميز 22"
+    },
+    "degree": "Master",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-10-05T03:17:52.440Z",
+    "link": "https://example.com/scholarship-22",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 23",
+      "ar": "منحة التميز العالمية 23"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Australia",
+      "ar": "أستراليا"
+    },
+    "university": {
+      "en": "University of Excellence 23",
+      "ar": "جامعة التميز 23"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-13T08:17:22.980Z",
+    "link": "https://example.com/scholarship-23",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 24",
+      "ar": "منحة التميز العالمية 24"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Japan",
+      "ar": "اليابان"
+    },
+    "university": {
+      "en": "University of Excellence 24",
+      "ar": "جامعة التميز 24"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-11-23T12:09:27.751Z",
+    "link": "https://example.com/scholarship-24",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 25",
+      "ar": "منحة التميز العالمية 25"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Turkey",
+      "ar": "تركيا"
+    },
+    "university": {
+      "en": "University of Excellence 25",
+      "ar": "جامعة التميز 25"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-11-23T22:43:00.251Z",
+    "link": "https://example.com/scholarship-25",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 26",
+      "ar": "منحة التميز العالمية 26"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Egypt",
+      "ar": "مصر"
+    },
+    "university": {
+      "en": "University of Excellence 26",
+      "ar": "جامعة التميز 26"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-08-11T09:24:21.446Z",
+    "link": "https://example.com/scholarship-26",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 27",
+      "ar": "منحة التميز العالمية 27"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Qatar",
+      "ar": "قطر"
+    },
+    "university": {
+      "en": "University of Excellence 27",
+      "ar": "جامعة التميز 27"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-08-13T22:22:55.667Z",
+    "link": "https://example.com/scholarship-27",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 28",
+      "ar": "منحة التميز العالمية 28"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "USA",
+      "ar": "الولايات المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 28",
+      "ar": "جامعة التميز 28"
+    },
+    "degree": "Other",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-11-15T08:37:04.134Z",
+    "link": "https://example.com/scholarship-28",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 29",
+      "ar": "منحة التميز العالمية 29"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "UK",
+      "ar": "المملكة المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 29",
+      "ar": "جامعة التميز 29"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-02T20:34:43.334Z",
+    "link": "https://example.com/scholarship-29",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 30",
+      "ar": "منحة التميز العالمية 30"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Canada",
+      "ar": "كندا"
+    },
+    "university": {
+      "en": "University of Excellence 30",
+      "ar": "جامعة التميز 30"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-11-27T08:00:12.800Z",
+    "link": "https://example.com/scholarship-30",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 31",
+      "ar": "منحة التميز العالمية 31"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Germany",
+      "ar": "ألمانيا"
+    },
+    "university": {
+      "en": "University of Excellence 31",
+      "ar": "جامعة التميز 31"
+    },
+    "degree": "PhD",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-01T05:57:13.795Z",
+    "link": "https://example.com/scholarship-31",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 32",
+      "ar": "منحة التميز العالمية 32"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Australia",
+      "ar": "أستراليا"
+    },
+    "university": {
+      "en": "University of Excellence 32",
+      "ar": "جامعة التميز 32"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-10-28T16:00:56.471Z",
+    "link": "https://example.com/scholarship-32",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 33",
+      "ar": "منحة التميز العالمية 33"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Japan",
+      "ar": "اليابان"
+    },
+    "university": {
+      "en": "University of Excellence 33",
+      "ar": "جامعة التميز 33"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-10-15T14:51:09.929Z",
+    "link": "https://example.com/scholarship-33",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 34",
+      "ar": "منحة التميز العالمية 34"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Turkey",
+      "ar": "تركيا"
+    },
+    "university": {
+      "en": "University of Excellence 34",
+      "ar": "جامعة التميز 34"
+    },
+    "degree": "Master",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-08-30T08:47:00.510Z",
+    "link": "https://example.com/scholarship-34",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 35",
+      "ar": "منحة التميز العالمية 35"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Egypt",
+      "ar": "مصر"
+    },
+    "university": {
+      "en": "University of Excellence 35",
+      "ar": "جامعة التميز 35"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-09-01T09:48:28.063Z",
+    "link": "https://example.com/scholarship-35",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 36",
+      "ar": "منحة التميز العالمية 36"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Qatar",
+      "ar": "قطر"
+    },
+    "university": {
+      "en": "University of Excellence 36",
+      "ar": "جامعة التميز 36"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-10-16T09:41:40.663Z",
+    "link": "https://example.com/scholarship-36",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 37",
+      "ar": "منحة التميز العالمية 37"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "USA",
+      "ar": "الولايات المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 37",
+      "ar": "جامعة التميز 37"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-10-28T13:02:21.552Z",
+    "link": "https://example.com/scholarship-37",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 38",
+      "ar": "منحة التميز العالمية 38"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "UK",
+      "ar": "المملكة المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 38",
+      "ar": "جامعة التميز 38"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-10T02:33:40.391Z",
+    "link": "https://example.com/scholarship-38",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 39",
+      "ar": "منحة التميز العالمية 39"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Canada",
+      "ar": "كندا"
+    },
+    "university": {
+      "en": "University of Excellence 39",
+      "ar": "جامعة التميز 39"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-10-21T18:31:49.564Z",
+    "link": "https://example.com/scholarship-39",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 40",
+      "ar": "منحة التميز العالمية 40"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Germany",
+      "ar": "ألمانيا"
+    },
+    "university": {
+      "en": "University of Excellence 40",
+      "ar": "جامعة التميز 40"
+    },
+    "degree": "Other",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-10T09:37:13.823Z",
+    "link": "https://example.com/scholarship-40",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 41",
+      "ar": "منحة التميز العالمية 41"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Australia",
+      "ar": "أستراليا"
+    },
+    "university": {
+      "en": "University of Excellence 41",
+      "ar": "جامعة التميز 41"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-21T16:46:16.607Z",
+    "link": "https://example.com/scholarship-41",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 42",
+      "ar": "منحة التميز العالمية 42"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Japan",
+      "ar": "اليابان"
+    },
+    "university": {
+      "en": "University of Excellence 42",
+      "ar": "جامعة التميز 42"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-11-08T04:11:09.747Z",
+    "link": "https://example.com/scholarship-42",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 43",
+      "ar": "منحة التميز العالمية 43"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Turkey",
+      "ar": "تركيا"
+    },
+    "university": {
+      "en": "University of Excellence 43",
+      "ar": "جامعة التميز 43"
+    },
+    "degree": "PhD",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-09-28T20:07:44.738Z",
+    "link": "https://example.com/scholarship-43",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 44",
+      "ar": "منحة التميز العالمية 44"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Egypt",
+      "ar": "مصر"
+    },
+    "university": {
+      "en": "University of Excellence 44",
+      "ar": "جامعة التميز 44"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-11-19T17:08:20.281Z",
+    "link": "https://example.com/scholarship-44",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 45",
+      "ar": "منحة التميز العالمية 45"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Qatar",
+      "ar": "قطر"
+    },
+    "university": {
+      "en": "University of Excellence 45",
+      "ar": "جامعة التميز 45"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-09-21T14:42:34.516Z",
+    "link": "https://example.com/scholarship-45",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 46",
+      "ar": "منحة التميز العالمية 46"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "USA",
+      "ar": "الولايات المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 46",
+      "ar": "جامعة التميز 46"
+    },
+    "degree": "Master",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-08-23T10:56:46.745Z",
+    "link": "https://example.com/scholarship-46",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 47",
+      "ar": "منحة التميز العالمية 47"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "UK",
+      "ar": "المملكة المتحدة"
+    },
+    "university": {
+      "en": "University of Excellence 47",
+      "ar": "جامعة التميز 47"
+    },
+    "degree": "PhD",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-10-19T16:11:01.558Z",
+    "link": "https://example.com/scholarship-47",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 48",
+      "ar": "منحة التميز العالمية 48"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Canada",
+      "ar": "كندا"
+    },
+    "university": {
+      "en": "University of Excellence 48",
+      "ar": "جامعة التميز 48"
+    },
+    "degree": "Other",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine",
+      "Engineering"
+    ],
+    "deadline": "2026-11-15T18:35:56.742Z",
+    "link": "https://example.com/scholarship-48",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 49",
+      "ar": "منحة التميز العالمية 49"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Germany",
+      "ar": "ألمانيا"
+    },
+    "university": {
+      "en": "University of Excellence 49",
+      "ar": "جامعة التميز 49"
+    },
+    "degree": "Bachelor",
+    "fundingType": "Partially Funded",
+    "majors": [
+      "Computer Science"
+    ],
+    "deadline": "2026-08-18T22:55:42.090Z",
+    "link": "https://example.com/scholarship-49",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  },
+  {
+    "title": {
+      "en": "Global Excellence Scholarship 50",
+      "ar": "منحة التميز العالمية 50"
+    },
+    "description": {
+      "en": "This is a fully funded scholarship for outstanding students in the field of Science and Technology. Covers tuition, accommodation, and a monthly stipend.",
+      "ar": "هذه منحة ممولة بالكامل للطلاب المتميزين في مجال العلوم والتكنولوجيا. تغطي الرسوم الدراسية والسكن وراتب شهري."
+    },
+    "country": {
+      "en": "Australia",
+      "ar": "أستراليا"
+    },
+    "university": {
+      "en": "University of Excellence 50",
+      "ar": "جامعة التميز 50"
+    },
+    "degree": "Master",
+    "fundingType": "Fully Funded",
+    "majors": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "deadline": "2026-10-05T21:29:04.080Z",
+    "link": "https://example.com/scholarship-50",
+    "image": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+    "keywords": [
+      "Science",
+      "Technology",
+      "Global",
+      "Excellence",
+      "Funded"
+    ]
+  }
+]

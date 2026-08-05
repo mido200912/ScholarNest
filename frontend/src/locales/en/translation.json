@@ -1,0 +1,71 @@
+{
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "compare": "Compare",
+    "interview": "Mock Interview",
+    "coverLetter": "Cover Letter",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all read",
+    "noNotifications": "No notifications yet"
+  },
+  "hero": {
+    "title1": "Unlock Your Future with",
+    "title2": "Global Scholarships",
+    "subtitle": "Discover thousands of fully funded opportunities. Let our AI assistant help you build the perfect profile and apply with confidence.",
+    "cta1": "Find Scholarships",
+    "cta2": "Create Free Account"
+  },
+  "stats": {
+    "countries": "Countries",
+    "scholarships": "Scholarships",
+    "students": "Students Helped",
+    "funding": "Funding Available"
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "subtitle": "Your journey to a fully funded education in 3 simple steps",
+    "step1_title": "Create Profile",
+    "step1_desc": "Sign up and tell our AI about your academic background and dreams.",
+    "step2_title": "Match & Discover",
+    "step2_desc": "Our smart algorithm finds the best scholarships tailored exactly for you.",
+    "step3_title": "Apply & Win",
+    "step3_desc": "Use our AI assistant to perfect your motivation letter and CV."
+  },
+  "search": {
+    "title1": "Find Your Dream",
+    "title2": "Scholarship",
+    "subtitle": "Search through thousands of fully funded and partially funded scholarships worldwide.",
+    "placeholder": "Search by keywords, country, or major...",
+    "btn": "Search"
+  },
+  "features": {
+    "title": "Why ScholarNest is Different",
+    "ai_title": "AI-Powered Matching",
+    "ai_desc": "Our proprietary AI analyzes your profile and matches you with scholarships you have the highest probability of winning.",
+    "realtime_title": "Real-Time Updates",
+    "realtime_desc": "Never miss a deadline. We sync with university databases globally to provide up-to-the-minute scholarship statuses.",
+    "global_title": "Global Reach",
+    "global_desc": "From Ivy League to European Excellence programs, access a curated database of verified, fully-funded opportunities."
+  },
+  "deepDive": {
+    "title": "Your Ultimate Academic Co-Pilot",
+    "desc1": "ScholarNest isn't just a search engine; it's an intelligent ecosystem designed to guide you from discovery to acceptance.",
+    "desc2": "We combine an elite database of global scholarships with state-of-the-art AI to help you draft motivation letters, prepare for interviews, and optimize your application strategy."
+  },
+  "dashboard": {
+    "perfectMatches": "Perfect Matches",
+    "noMatches": "No Perfect Matches Yet",
+    "completeProfile": "Complete your Smart Profile to get personalized scholarship recommendations.",
+    "completeSmartProfile": "Complete Smart Profile",
+    "matchPercentage": "Match",
+    "countryMatch": "Country Match",
+    "majorMatch": "Major Match",
+    "saveScholarship": "Save Scholarship"
+  }
+}
