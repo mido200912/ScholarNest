@@ -11,7 +11,7 @@ import { useCompareStore } from '../store/compareStore';
 import { useToast } from '../components/ui/Toast';
 import axios from 'axios';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 interface Scholarship {
   _id: string;

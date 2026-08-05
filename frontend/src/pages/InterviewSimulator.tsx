@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 export default function InterviewSimulator() {
   const { user } = useAuthStore();

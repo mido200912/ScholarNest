@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 export default function Compare() {
   const { scholarships, removeScholarship, clearCompare } = useCompareStore();

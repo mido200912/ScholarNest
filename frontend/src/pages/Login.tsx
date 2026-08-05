@@ -10,6 +10,7 @@ import axios from 'axios';
 import ThemeToggle from '../components/shared/ThemeToggle';
 import LanguageSwitcher from '../components/shared/LanguageSwitcher';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { API_BASE } from '../config/api';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -26,7 +27,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.post('https://scholarnest.up.railway.app/api/auth/login', {
+      const { data } = await axios.post(`${API_BASE}/auth/login`, {
         email,
         password,
       });

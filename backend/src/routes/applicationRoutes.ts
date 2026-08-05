@@ -3,6 +3,9 @@ import {
   getMyApplications,
   toggleSave,
   updateApplicationStatus,
+  getApplicationTimeline,
+  addDocument,
+  deleteDocument,
   getSavedIds,
 } from '../controllers/applicationController';
 import { protect } from '../middleware/auth';
@@ -15,5 +18,8 @@ router.get('/', getMyApplications);
 router.get('/saved-ids', getSavedIds);
 router.post('/save/:scholarshipId', toggleSave);
 router.patch('/:scholarshipId/status', updateApplicationStatus);
+router.get('/:scholarshipId/timeline', getApplicationTimeline);
+router.post('/:scholarshipId/docs', addDocument);
+router.delete('/:scholarshipId/docs/:docId', deleteDocument);
 
 export default router;

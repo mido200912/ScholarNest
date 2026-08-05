@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/ui/Toast';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 interface Scholarship {
   _id: string;
@@ -268,7 +268,7 @@ export default function ScholarshipDetails() {
               if (!newComment.trim()) return;
               setCommentLoading(true);
               try {
-                const { data } = await axios.post(`https://scholarnest.up.railway.app/api/comments/${id}`,
+                const { data } = await axios.post(`${API}/comments/${id}`,
                   { text: newComment },
                   { headers: { Authorization: `Bearer ${useAuthStore.getState().user?.token}` } }
                 );

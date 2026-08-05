@@ -16,7 +16,7 @@ import axios from 'axios';
 import AdminDashboard from './AdminDashboard';
 import { useToast } from '../components/ui/Toast';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 interface Scholarship {
   _id: string;
@@ -47,8 +47,8 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches' | 'mysubmissions'>('saved');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [applications, setApplications] = useState<{ saved: AppEntry[]; applying: AppEntry[]; accepted: AppEntry[] }>({
-    saved: [], applying: [], accepted: []
+  const [applications, setApplications] = useState<{ saved: AppEntry[]; applying: AppEntry[]; underReview: AppEntry[]; interview: AppEntry[]; accepted: AppEntry[]; rejected: AppEntry[] }>({
+    saved: [], applying: [], underReview: [], interview: [], accepted: [], rejected: []
   });
   const [matchedScholarships, setMatchedScholarships] = useState<Scholarship[]>([]);
   const [myScholarships, setMyScholarships] = useState<any[]>([]);
@@ -160,7 +160,7 @@ export default function Dashboard() {
   };
 
   // Move scholarship between columns
-  const handleStatusChange = async (scholarshipId: string, newStatus: 'saved' | 'applying' | 'accepted') => {
+  const handleStatusChange = async (scholarshipId: string, newStatus: 'saved' | 'applying' | 'under_review' | 'interview' | 'accepted' | 'rejected') => {
     setStatusUpdating(scholarshipId);
     try {
       await axios.patch(`${API}/applications/${scholarshipId}/status`, { status: newStatus }, {
@@ -219,10 +219,13 @@ export default function Dashboard() {
   };
 
   const tabs = [
-    { id: 'saved', label: 'Saved', count: applications.saved.length, icon: Bookmark },
-    { id: 'applying', label: 'In Progress', count: applications.applying.length, icon: Clock },
-    { id: 'accepted', label: 'Accepted', count: applications.accepted.length, icon: GraduationCap },
-    { id: 'matches', label: 'Perfect Matches', count: matchedScholarships.length, icon: Sparkles },
+    { id: 'saved',    label: 'Saved',       count: applications.saved.length,    icon: Bookmark },
+    { id: 'applying', label: 'In Progress',  count: applications.applying.length, icon: Clock },
+    { id: 'underReview', label: 'Under Review', count: applications.underReview.length, icon: Clock },
+    { id: 'interview', label: 'Interview',    count: applications.interview.length, icon: GraduationCap },
+    { id: 'accepted', label: 'Accepted',     count: applications.accepted.length, icon: GraduationCap },
+    { id: 'rejected', label: 'Rejected',     count: applications.rejected.length, icon: XCircle },
+    { id: 'matches',  label: 'Perfect Matches', count: matchedScholarships.length, icon: Sparkles },
     { id: 'mysubmissions', label: 'My Submissions', count: myScholarships.length, icon: FileText },
   ];
 
@@ -705,7 +708,7 @@ export default function Dashboard() {
                                       {statusUpdating === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><ChevronDown className="w-3.5 h-3.5 mr-1" />Move to</>}
                                     </Button>
                                     <div className="absolute right-0 top-full mt-1 w-36 bg-card border border-border shadow-lg z-10 hidden group-hover:block">
-                                      {(['saved', 'applying', 'accepted'] as const).filter(st => st !== app.status).map(st => (
+                                      {(['saved', 'applying', 'under_review', 'interview', 'accepted', 'rejected'] as const).filter(st => st !== app.status).map(st => (
                                         <button key={st} onClick={() => handleStatusChange(s._id, st)}
                                           className="w-full px-3 py-2 text-left text-xs hover:bg-muted capitalize">{st}</button>
                                       ))}

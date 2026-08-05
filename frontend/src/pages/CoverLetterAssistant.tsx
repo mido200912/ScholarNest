@@ -11,7 +11,7 @@ import {
   ChevronRight, Lightbulb, BookOpen, MessageSquare
 } from 'lucide-react';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 export default function CoverLetterAssistant() {
   const { user } = useAuthStore();

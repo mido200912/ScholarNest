@@ -7,7 +7,8 @@ import axios from 'axios';
 import LanguageSwitcher from '../shared/LanguageSwitcher';
 import ThemeToggle from '../shared/ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Scale, Bell, User as UserIcon, MessageSquare, PenLine } from 'lucide-react';
+import { Menu, X, Scale, Bell, AlertTriangle, User as UserIcon, MessageSquare, PenLine } from 'lucide-react';
+import { API_BASE } from '../../config/api';
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
@@ -15,21 +16,26 @@ export default function Navbar() {
   const token = user?.token;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
   const isRtl = i18n.language === 'ar';
 
   useEffect(() => {
     if (user && token) {
-      axios.get('https://scholarnest.up.railway.app/api/notifications', {
+      axios.get(`${API_BASE}/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => setNotifications(res.data.data)).catch(console.error);
+      axios.get(`${API_BASE}/alerts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => setAlerts(res.data.data || [])).catch(console.error);
     }
   }, [user, token]);
 
   const markAllAsRead = async () => {
     if (!token) return;
     try {
-      await axios.put('https://scholarnest.up.railway.app/api/notifications/all/read', {}, {
+      await axios.put(`${API_BASE}/notifications/all/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
@@ -39,6 +45,19 @@ export default function Navbar() {
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadAlertsCount = alerts.filter(a => !a.isRead).length;
+
+  const markAllAlertsAsRead = async () => {
+    if (!token) return;
+    try {
+      await axios.put(`${API_BASE}/alerts/read-all`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAlerts(alerts.map(a => ({ ...a, isRead: true })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <motion.nav
@@ -78,7 +97,7 @@ export default function Navbar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setShowNotifications(!showNotifications)}
+                  onClick={() => { setShowNotifications(!showNotifications); setShowAlerts(false); }}
                   className="relative rounded-full text-muted-foreground hover:text-foreground"
                 >
                   <Bell className="w-5 h-5" />
@@ -120,6 +139,62 @@ export default function Navbar() {
                               </p>
                               <p className="text-[10px] text-muted-foreground mt-2">
                                 {new Date(n.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Alerts */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => { setShowAlerts(!showAlerts); setShowNotifications(false); }}
+                  className="relative rounded-full text-muted-foreground hover:text-foreground"
+                >
+                  <AlertTriangle className="w-5 h-5" />
+                  {unreadAlertsCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-background"></span>
+                  )}
+                </Button>
+
+                <AnimatePresence>
+                  {showAlerts && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-80 bg-card border border-border shadow-lg rounded-2xl overflow-hidden z-50"
+                    >
+                      <div className="p-4 border-b border-border flex items-center justify-between">
+                        <h3 className="font-semibold text-foreground">Alerts</h3>
+                        {unreadAlertsCount > 0 && (
+                          <button onClick={markAllAlertsAsRead} className="text-xs text-red-600 hover:text-red-700 font-medium">
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto">
+                        {alerts.length === 0 ? (
+                          <div className="p-6 text-center text-muted-foreground text-sm">
+                            No alerts yet
+                          </div>
+                        ) : (
+                          alerts.slice(0, 10).map(a => (
+                            <div key={a._id} className={`p-4 border-b border-border last:border-0 hover:bg-muted/50 transition-colors ${!a.isRead ? 'bg-orange-50/50 dark:bg-orange-950/20' : ''}`}>
+                              <p className="text-sm font-medium text-foreground mb-1">
+                                {isRtl ? a.title.ar : a.title.en}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {isRtl ? a.message.ar : a.message.en}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-2">
+                                {new Date(a.createdAt).toLocaleDateString()}
                               </p>
                             </div>
                           ))

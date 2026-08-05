@@ -3,7 +3,20 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IApplication extends Document {
   user: mongoose.Types.ObjectId;
   scholarship: mongoose.Types.ObjectId;
-  status: 'saved' | 'applying' | 'accepted';
+  status: 'saved' | 'applying' | 'under_review' | 'interview' | 'accepted' | 'rejected';
+  appliedAt?: Date;
+  reviewedAt?: Date;
+  interviewAt?: Date;
+  timeline: {
+    status: string;
+    date: Date;
+    note?: string;
+  }[];
+  documents: {
+    name: string;
+    url: string;
+    uploadedAt: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,9 +35,22 @@ const applicationSchema = new Schema<IApplication>(
     },
     status: {
       type: String,
-      enum: ['saved', 'applying', 'accepted'],
+      enum: ['saved', 'applying', 'under_review', 'interview', 'accepted', 'rejected'],
       default: 'saved',
     },
+    appliedAt: Date,
+    reviewedAt: Date,
+    interviewAt: Date,
+    timeline: [{
+      status: { type: String, required: true },
+      date: { type: Date, default: Date.now },
+      note: String,
+    }],
+    documents: [{
+      name: { type: String, required: true },
+      url: { type: String, required: true },
+      uploadedAt: { type: Date, default: Date.now },
+    }],
   },
   { timestamps: true }
 );

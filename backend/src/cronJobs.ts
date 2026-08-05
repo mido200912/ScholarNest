@@ -2,6 +2,9 @@ import cron from 'node-cron';
 import { Application } from './models/Application';
 import { Scholarship } from './models/Scholarship';
 import { createNotification } from './controllers/notificationController';
+import { createAlert } from './controllers/alertController';
+import { sendTelegramMessage } from './services/telegramService';
+import { User } from './models/User';
 
 export const cleanupExpiredScholarships = async () => {
   try {
@@ -15,11 +18,93 @@ export const cleanupExpiredScholarships = async () => {
   }
 };
 
+export const sendDeadlineReminders = async () => {
+  try {
+    const now = new Date();
+    const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const in1Day = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+
+    const applications = await Application.find({ status: { $in: ['saved', 'applying'] } })
+      .populate('scholarship')
+      .populate('user', 'name telegramChatId');
+
+    for (const app of applications) {
+      if (!app.scholarship || !app.user) continue;
+      const scholarship: any = app.scholarship;
+      const user: any = app.user;
+      if (!scholarship.deadline) continue;
+
+      const deadline = new Date(scholarship.deadline);
+      const diffHours = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      let alertType = '';
+      let title = { en: '', ar: '' };
+      let message = { en: '', ar: '' };
+
+      if (diffHours > 6 * 24 && diffHours <= 7 * 24) {
+        alertType = 'deadline_7days';
+        title = {
+          en: `7 Days Left: ${scholarship.title.en}`,
+          ar: `7 أيام متبقية: ${scholarship.title.ar}`
+        };
+        message = {
+          en: `You have 7 days left to apply for ${scholarship.title.en} at ${scholarship.university.en}.`,
+          ar: `باقي 7 أيام للتقديم على منحة ${scholarship.title.ar} في ${scholarship.university.ar}.`
+        };
+      } else if (diffHours > 2 * 24 && diffHours <= 3 * 24) {
+        alertType = 'deadline_3days';
+        title = {
+          en: `3 Days Left: ${scholarship.title.en}`,
+          ar: `3 أيام متبقية: ${scholarship.title.ar}`
+        };
+        message = {
+          en: `Only 3 days left to apply for ${scholarship.title.en}!`,
+          ar: `باقي 3 أيام فقط للتقديم على منحة ${scholarship.title.ar}!`
+        };
+      } else if (diffHours > 0 && diffHours <= 24) {
+        alertType = 'deadline_1day';
+        title = {
+          en: `Last Day: ${scholarship.title.en}`,
+          ar: `آخر يوم: ${scholarship.title.ar}`
+        };
+        message = {
+          en: `Today is the last day to apply for ${scholarship.title.en}!`,
+          ar: `اليوم آخر يوم للتقديم على منحة ${scholarship.title.ar}!`
+        };
+      }
+
+      if (alertType) {
+        await createAlert(
+          user._id.toString(),
+          alertType,
+          title,
+          message,
+          `/scholarships/${scholarship._id}`
+        );
+
+        // Also send Telegram if available
+        if (user.telegramChatId) {
+          sendTelegramMessage(user.telegramChatId, `${title.en}\n\n${message.en}`).catch(() => {});
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error sending deadline reminders:', error);
+  }
+};
+
 export const startCronJobs = () => {
   // Run expired scholarships cleanup every day at midnight
   cron.schedule('0 0 * * *', async () => {
     console.log('Running daily expired scholarship cleanup...');
     await cleanupExpiredScholarships();
+  });
+
+  // Run deadline reminders every 6 hours
+  cron.schedule('0 */6 * * *', async () => {
+    console.log('Running deadline reminders...');
+    await sendDeadlineReminders();
   });
   // Run every day at midnight (0 0 * * *)
   // For testing purposes, we can run it more often, e.g. every minute: * * * * *

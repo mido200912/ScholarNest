@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, BookOpen, Target, Languages, Loader2, Save } from 'lucide-react';
+import { User, BookOpen, Target, Languages, Loader2, Save, Award, Star, Trophy } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,7 +9,7 @@ import { Label } from '../components/ui/label';
 import { useToast } from '../components/ui/Toast';
 import axios from 'axios';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 export default function Profile() {
   const { user, setUser } = useAuthStore();
@@ -181,6 +181,68 @@ export default function Profile() {
               </Button>
             </div>
           </form>
+        </motion.div>
+
+        {/* Gamification Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-card border border-border rounded-2xl p-6 sm:p-10 shadow-sm mt-6"
+        >
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-500" /> Your Progress
+          </h2>
+
+          {/* Points & Level */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-muted/50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-red-600">{user?.points || 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total Points</p>
+            </div>
+            <div className="bg-muted/50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-yellow-600">{user?.level || 'Bronze'}</p>
+              <p className="text-xs text-muted-foreground mt-1">Current Level</p>
+            </div>
+          </div>
+
+          {/* Progress to next level */}
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>{user?.level || 'Bronze'}</span>
+              <span>{user?.level === 'Platinum' ? 'Max Level' : `Next: ${user?.level === 'Bronze' ? 'Silver' : user?.level === 'Silver' ? 'Gold' : 'Platinum'}`}</span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-red-500 to-yellow-500 rounded-full transition-all"
+                style={{
+                  width: `${Math.min(((user?.points || 0) / (user?.level === 'Bronze' ? 200 : user?.level === 'Silver' ? 500 : 1000)) * 100, 100)}%`
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Badges */}
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Award className="w-4 h-4 text-red-500" /> Badges ({user?.badges?.length || 0})
+          </h3>
+          {user?.badges?.length ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {user.badges.map((badge: any) => (
+                <div key={badge.id} className="bg-muted/50 rounded-xl p-3 text-center hover:bg-muted transition-colors">
+                  <p className="text-2xl mb-1">{badge.icon}</p>
+                  <p className="text-xs font-medium">{badge.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {new Date(badge.earnedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-xl">
+              Start saving and applying to earn badges!
+            </p>
+          )}
         </motion.div>
       </div>
     </div>

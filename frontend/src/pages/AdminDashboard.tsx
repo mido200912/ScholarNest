@@ -13,7 +13,7 @@ import {
   Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil
 } from 'lucide-react';
 
-const API = 'https://scholarnest.up.railway.app/api';
+import { API_BASE as API } from '../config/api';
 
 // ── JSON Schema Template ────────────────────────────────────────────────────
 const JSON_TEMPLATE = `[
@@ -34,7 +34,7 @@ const JSON_TEMPLATE = `[
 export default function AdminDashboard() {
   const { user } = useAuthStore();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
-  const [activeTab, setActiveTab] = useState<'pending' | 'add' | 'bulk' | 'staff' | 'manage' | 'users'>('pending');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'pending' | 'add' | 'bulk' | 'staff' | 'manage' | 'users'>('analytics');
   const [pendingScholarships, setPendingScholarships] = useState<any[]>([]);
   const [allScholarships, setAllScholarships] = useState<any[]>([]);
   const [allScholarshipsTotal, setAllScholarshipsTotal] = useState(0);
@@ -46,6 +46,22 @@ export default function AdminDashboard() {
   const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
   const [deleteAllLoading, setDeleteAllLoading] = useState(false);
   const [editingScholarship, setEditingScholarship] = useState<any | null>(null);
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const { data } = await axios.get(`${API}/admin/stats`, { headers });
+      setAnalytics(data.data);
+    } catch {
+      toastError('Failed', 'Could not load analytics.');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -181,6 +197,7 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    if (activeTab === 'analytics') fetchAnalytics();
     if (activeTab === 'users') fetchAllUsers(1, userSearch, userRole);
     if (activeTab === 'staff') fetchStaff();
   }, [activeTab]);
@@ -307,6 +324,7 @@ export default function AdminDashboard() {
 
   // ── Sidebar Tabs ─────────────────────────────────────────────────────────────
   const tabs = [
+    { id: 'analytics', label: 'Analytics', icon: Sparkles, badge: undefined },
     { id: 'pending', label: 'Pending Review', icon: Clock, badge: pendingScholarships.length || undefined },
     { id: 'manage', label: 'Manage Scholarships', icon: Search, badge: allScholarshipsTotal || undefined },
     { id: 'add', label: 'Add Scholarship', icon: Plus, badge: undefined },
@@ -386,6 +404,130 @@ export default function AdminDashboard() {
       <div className="flex-1 md:pl-10 min-w-0">
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+
+            {/* ── ANALYTICS ── */}
+            {activeTab === 'analytics' && (
+              <div>
+                <h2 className="text-2xl font-light mb-6">Analytics Dashboard</h2>
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : !analytics ? (
+                  <div className="text-center py-20 border border-dashed border-border rounded-lg">
+                    <p className="text-muted-foreground">Failed to load analytics.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      <div className="bg-card border border-border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Total Users</p>
+                        <p className="text-2xl font-bold">{analytics.users?.total || 0}</p>
+                        <p className="text-[10px] text-green-600 mt-1">+{analytics.users?.today || 0} today</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Total Scholarships</p>
+                        <p className="text-2xl font-bold">{analytics.scholarships?.total || 0}</p>
+                        <p className="text-[10px] text-green-600 mt-1">{analytics.scholarships?.active || 0} active</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Applications</p>
+                        <p className="text-2xl font-bold">{analytics.applications?.total || 0}</p>
+                        <p className="text-[10px] text-blue-600 mt-1">{analytics.applications?.accepted || 0} accepted</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground mb-1">Pending Review</p>
+                        <p className="text-2xl font-bold text-yellow-600">{analytics.scholarships?.pending || 0}</p>
+                        <p className="text-[10px] text-red-600 mt-1">{analytics.scholarships?.expired || 0} expired</p>
+                      </div>
+                    </div>
+
+                    {/* Charts Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      {/* Top Countries */}
+                      <div className="bg-card border border-border rounded-lg p-5">
+                        <h3 className="font-semibold mb-4">Top Countries</h3>
+                        {analytics.topCountries?.map((c: any) => (
+                          <div key={c._id} className="flex items-center justify-between mb-2">
+                            <span className="text-sm">{c._id || 'Unknown'}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-red-500 rounded-full" style={{ width: `${(c.count / (analytics.topCountries[0]?.count || 1)) * 100}%` }} />
+                              </div>
+                              <span className="text-xs text-muted-foreground w-6 text-right">{c.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Top Universities */}
+                      <div className="bg-card border border-border rounded-lg p-5">
+                        <h3 className="font-semibold mb-4">Top Universities</h3>
+                        {analytics.topUniversities?.map((u: any) => (
+                          <div key={u._id} className="flex items-center justify-between mb-2">
+                            <span className="text-sm truncate mr-2">{u._id || 'Unknown'}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(u.count / (analytics.topUniversities[0]?.count || 1)) * 100}%` }} />
+                              </div>
+                              <span className="text-xs text-muted-foreground w-6 text-right">{u.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Distribution */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-card border border-border rounded-lg p-5">
+                        <h3 className="font-semibold mb-4">Degrees Distribution</h3>
+                        {analytics.degreesDistribution?.map((d: any) => (
+                          <div key={d._id} className="flex items-center justify-between mb-2">
+                            <span className="text-sm">{d._id}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-green-500 rounded-full" style={{ width: `${(d.count / (analytics.degreesDistribution[0]?.count || 1)) * 100}%` }} />
+                              </div>
+                              <span className="text-xs text-muted-foreground w-6 text-right">{d.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="bg-card border border-border rounded-lg p-5">
+                        <h3 className="font-semibold mb-4">Funding Types</h3>
+                        {analytics.fundingDistribution?.map((f: any) => (
+                          <div key={f._id} className="flex items-center justify-between mb-2">
+                            <span className="text-sm">{f._id}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(f.count / (analytics.fundingDistribution[0]?.count || 1)) * 100}%` }} />
+                              </div>
+                              <span className="text-xs text-muted-foreground w-6 text-right">{f.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Export Buttons */}
+                    <div className="flex gap-3 mt-8">
+                      <a href={`${API}/admin/export/scholarships`} target="_blank" rel="noreferrer">
+                        <Button variant="outline" className="rounded-lg text-xs">
+                          <FileJson className="w-3.5 h-3.5 mr-1" /> Export Scholarships CSV
+                        </Button>
+                      </a>
+                      <a href={`${API}/admin/export/users`} target="_blank" rel="noreferrer">
+                        <Button variant="outline" className="rounded-lg text-xs">
+                          <FileJson className="w-3.5 h-3.5 mr-1" /> Export Users CSV
+                        </Button>
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* ── PENDING ── */}
             {activeTab === 'pending' && (

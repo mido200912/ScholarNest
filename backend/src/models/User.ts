@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IUser extends Document {
   name: string;
   email: string;
-  password?: string; // Optional for Google OAuth users
+  password?: string;
   googleId?: string;
   role: 'user' | 'admin' | 'assistant_admin';
   savedScholarships: mongoose.Types.ObjectId[];
@@ -11,9 +11,19 @@ export interface IUser extends Document {
   // Smart Profile fields
   major?: string;
   gpa?: string;
-  englishLevel?: string; // IELTS/TOEFL score
+  englishLevel?: string;
   targetCountries?: string[];
   telegramChatId?: string;
+  
+  // Gamification
+  points: number;
+  level: string;
+  badges: {
+    id: string;
+    name: string;
+    icon: string;
+    earnedAt: Date;
+  }[];
   
   createdAt: Date;
   updatedAt: Date;
@@ -59,6 +69,14 @@ const userSchema = new Schema<IUser>(
     englishLevel: { type: String, trim: true },
     targetCountries: [{ type: String, trim: true }],
     telegramChatId: { type: String, trim: true },
+    points: { type: Number, default: 0 },
+    level: { type: String, default: 'Bronze' },
+    badges: [{
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      icon: { type: String, required: true },
+      earnedAt: { type: Date, default: Date.now },
+    }],
   },
   {
     timestamps: true,

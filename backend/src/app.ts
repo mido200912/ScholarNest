@@ -8,6 +8,8 @@ import aiRoutes from './routes/aiRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import commentRoutes from './routes/commentRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import adminRoutes from './routes/adminRoutes';
+import alertRoutes from './routes/alertRoutes';
 
 const app = express();
 
@@ -40,6 +42,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/alerts', alertRoutes);
 
 // Basic Health Check Route
 app.get('/api/health', (req, res) => {
