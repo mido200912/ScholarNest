@@ -294,8 +294,15 @@ export default function AdminDashboard() {
     setJsonError('');
     try {
       const { data } = await axios.post(`${API}/scholarships/bulk`, { scholarships: parsed }, { headers });
-      toastSuccess(`${data.count} scholarships imported!`, 'All scholarships are now live.');
-      setBulkJson('');
+      if (data.partial) {
+        toastSuccess(`${data.count} of ${data.total} imported!`, data.message);
+        if (data.details?.length) {
+          setJsonError(`${data.failedCount} failed:\n${data.details.join('\n')}`);
+        }
+      } else {
+        toastSuccess(`${data.count} scholarships imported!`, 'All scholarships are now live.');
+        setBulkJson('');
+      }
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Bulk import failed.';
       const details = err.response?.data?.details?.join('\n') || '';

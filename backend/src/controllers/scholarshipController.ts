@@ -250,6 +250,26 @@ export const bulkCreateScholarships = async (req: AuthRequest, res: Response): P
     res.status(201).json({ success: true, count: inserted.length, data: inserted });
   } catch (error: any) {
     console.error('Bulk import error:', error);
+
+    // MongoBulkWriteError: some docs inserted, some failed validation
+    if (error.name === 'MongoBulkWriteError' && error.insertedCount > 0) {
+      const failedDetails = error.writeErrors?.map((e: any) => {
+        const idx = e.index ?? '?';
+        const field = e.err?.keyPattern ? Object.keys(e.err.keyPattern).join(', ') : '';
+        return `#${Number(idx) + 1}${field ? ` (${field})` : ''}: ${e.errmsg || e.message}`;
+      }) ?? [];
+      res.status(207).json({
+        success: true,
+        partial: true,
+        count: error.insertedCount,
+        failedCount: error.writeErrors?.length ?? 0,
+        total: docs.length,
+        message: `${error.insertedCount} of ${docs.length} scholarships imported. ${error.writeErrors?.length ?? 0} failed.`,
+        details: failedDetails,
+      });
+      return;
+    }
+
     res.status(400).json({
       success: false,
       message: error.message || 'Bulk import failed',
