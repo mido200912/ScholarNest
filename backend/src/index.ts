@@ -8,18 +8,18 @@ import { startBotPolling } from './services/telegramBot';
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to Database then start server
-connectDB().then(async () => {
-  // Delete expired scholarships immediately on startup
-  await cleanupExpiredScholarships();
-
-  // Start background jobs
-  startCronJobs();
-
-  // Start Telegram bot polling
-  startBotPolling();
-
-  app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  });
+// Start server immediately (don't wait for MongoDB)
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  
+  try {
+    await connectDB();
+    console.log('MongoDB connected successfully');
+    
+    await cleanupExpiredScholarships();
+    startCronJobs();
+    startBotPolling();
+  } catch (error) {
+    console.error('MongoDB connection failed:', error);
+  }
 });

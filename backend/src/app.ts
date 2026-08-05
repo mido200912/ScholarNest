@@ -3,6 +3,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/authRoutes';
+import scholarshipRoutes from './routes/scholarshipRoutes';
+import aiRoutes from './routes/aiRoutes';
+import applicationRoutes from './routes/applicationRoutes';
+import commentRoutes from './routes/commentRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 const app = express();
 
@@ -30,11 +35,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/scholarships', require('./routes/scholarshipRoutes').default);
-app.use('/api/ai', require('./routes/aiRoutes').default);
-app.use('/api/applications', require('./routes/applicationRoutes').default);
-app.use('/api/comments', require('./routes/commentRoutes').default);
-app.use('/api/notifications', require('./routes/notificationRoutes').default);
+app.use('/api/scholarships', scholarshipRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Basic Health Check Route
 app.get('/api/health', (req, res) => {
