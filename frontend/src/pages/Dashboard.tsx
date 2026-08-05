@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import {
   FileText, Bookmark, GraduationCap, MapPin, Calendar, Clock,
   Loader2, Plus, ArrowRight, Settings, CheckCircle, ExternalLink,
-  Trash2, ChevronDown, Sparkles, X, Copy, MessageSquare, Menu, Pencil
+  Trash2, ChevronDown, Sparkles, X, XCircle, Copy, MessageSquare, Menu, Pencil
 } from 'lucide-react';
 import axios from 'axios';
 import AdminDashboard from './AdminDashboard';

@@ -10,6 +10,9 @@ interface User {
   gpa?: string;
   englishLevel?: string;
   targetCountries?: string[];
+  points?: number;
+  level?: string;
+  badges?: { id: string; name: string; icon: string; earnedAt: string }[];
 }
 
 interface AuthState {
