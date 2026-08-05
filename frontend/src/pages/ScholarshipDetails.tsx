@@ -11,7 +11,7 @@ import { useAuthStore } from '../store/authStore';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/ui/Toast';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 interface Scholarship {
   _id: string;
@@ -54,7 +54,7 @@ export default function ScholarshipDetails() {
       try {
         const { data } = await axios.get(`${API}/scholarships/${id}`);
         setScholarship(data.data);
-        
+
         const commentRes = await axios.get(`${API}/comments/${id}`);
         setComments(commentRes.data.data);
       } catch (e) {
@@ -174,10 +174,10 @@ export default function ScholarshipDetails() {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { icon: MapPin,         label: 'Country',    value: country },
-                { icon: GraduationCap,  label: 'Degree',     value: scholarship.degree },
-                { icon: Building2,      label: 'University', value: university },
-                { icon: Calendar,       label: 'Deadline',   value: new Date(scholarship.deadline).toLocaleDateString() },
+                { icon: MapPin, label: 'Country', value: country },
+                { icon: GraduationCap, label: 'Degree', value: scholarship.degree },
+                { icon: Building2, label: 'University', value: university },
+                { icon: Calendar, label: 'Deadline', value: new Date(scholarship.deadline).toLocaleDateString() },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="p-4 bg-muted/50 border border-border rounded-lg">
                   <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1">
@@ -244,7 +244,7 @@ export default function ScholarshipDetails() {
                   <><Bookmark className="w-4 h-4 mr-2" /> Save for Later</>
                 )}
               </Button>
-              
+
               {isSaved && (
                 <p className="text-xs text-center text-muted-foreground">
                   ✓ Added to your Dashboard under "Saved"
@@ -268,8 +268,8 @@ export default function ScholarshipDetails() {
               if (!newComment.trim()) return;
               setCommentLoading(true);
               try {
-                const { data } = await axios.post(`https://scholar-nest-1.vercel.app/api/comments/${id}`, 
-                  { text: newComment }, 
+                const { data } = await axios.post(`https://scholarnest.up.railway.app/api/comments/${id}`,
+                  { text: newComment },
                   { headers: { Authorization: `Bearer ${useAuthStore.getState().user?.token}` } }
                 );
                 setComments([data.data, ...comments]);
@@ -285,7 +285,7 @@ export default function ScholarshipDetails() {
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 space-y-3">
-                  <textarea 
+                  <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Ask a question or share your experience..."

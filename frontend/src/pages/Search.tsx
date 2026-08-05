@@ -11,7 +11,7 @@ import { useCompareStore } from '../store/compareStore';
 import { useToast } from '../components/ui/Toast';
 import axios from 'axios';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 interface Scholarship {
   _id: string;
@@ -146,7 +146,7 @@ export default function Search() {
 
         {/* Quick Filter Chips */}
         <div className="flex flex-wrap justify-center gap-2">
-          {(isAr 
+          {(isAr
             ? ['ممولة بالكامل', 'بدون أيلتس', 'ماجستير', 'أمريكا', 'ألمانيا', 'هندسة', 'بريطانيا', 'دكتوراه']
             : ['Fully Funded', 'No IELTS', 'Master', 'USA', 'Germany', 'Engineering', 'UK', 'PhD']
           ).map((tag) => (
@@ -173,83 +173,83 @@ export default function Search() {
             </div>
           ) : (
             <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {scholarships.slice(0, visibleCount).map((s, idx) => {
-                const isSaved = savedIds.has(s._id);
-                const isCompared = compareList.find(c => c._id === s._id);
-                return (
-                  <motion.div key={s._id}
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: idx * 0.05 }}>
-                    <Card className="h-full overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 bg-card border-border group flex flex-col">
-                      <div className="relative h-48 overflow-hidden shrink-0">
-                        <img src={s.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop'} alt="scholarship" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute top-3 right-3 bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-md">
-                          {s.fundingType}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {scholarships.slice(0, visibleCount).map((s, idx) => {
+                  const isSaved = savedIds.has(s._id);
+                  const isCompared = compareList.find(c => c._id === s._id);
+                  return (
+                    <motion.div key={s._id}
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: idx * 0.05 }}>
+                      <Card className="h-full overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 bg-card border-border group flex flex-col">
+                        <div className="relative h-48 overflow-hidden shrink-0">
+                          <img src={s.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop'} alt="scholarship" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <div className="absolute top-3 right-3 bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-md">
+                            {s.fundingType}
+                          </div>
+                          {/* Save Button */}
+                          <button onClick={() => handleSaveToggle(s._id)}
+                            disabled={savingId === s._id}
+                            className={`absolute top-3 left-3 p-2 rounded-full shadow-md transition-all ${isSaved ? 'bg-red-600 text-white' : 'bg-black/40 text-white hover:bg-red-600'}`}>
+                            {savingId === s._id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : isSaved ? (
+                              <BookmarkCheck className="w-4 h-4" />
+                            ) : (
+                              <Bookmark className="w-4 h-4" />
+                            )}
+                          </button>
                         </div>
-                        {/* Save Button */}
-                        <button onClick={() => handleSaveToggle(s._id)}
-                          disabled={savingId === s._id}
-                          className={`absolute top-3 left-3 p-2 rounded-full shadow-md transition-all ${isSaved ? 'bg-red-600 text-white' : 'bg-black/40 text-white hover:bg-red-600'}`}>
-                          {savingId === s._id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : isSaved ? (
-                            <BookmarkCheck className="w-4 h-4" />
-                          ) : (
-                            <Bookmark className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                      <CardHeader className="flex-1">
-                        <CardTitle className="text-lg font-bold line-clamp-2 leading-snug">{s.title.en}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2 pt-0">
-                        <div className="flex items-center text-muted-foreground text-sm">
-                          <GraduationCap size={14} className="mr-2 text-red-500 shrink-0" />
-                          <span className="truncate">{s.university.en}</span>
-                        </div>
-                        <div className="flex items-center text-muted-foreground text-sm">
-                          <MapPin size={14} className="mr-2 text-red-500 shrink-0" />
-                          {s.country.en}
-                        </div>
-                        <div className="flex items-center text-muted-foreground text-sm">
-                          <Calendar size={14} className="mr-2 text-red-500 shrink-0" />
-                          <span className={new Date(s.deadline).getTime() - Date.now() < 30 * 86400000 ? 'text-red-500 font-medium' : ''}>
-                            {formatDeadline(s.deadline)}
-                          </span>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="gap-2 pt-0">
-                        <Link to={`/scholarships/${s._id}`} className="flex-1">
-                          <Button variant="outline" className="w-full border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold">
-                            View Details
-                          </Button>
-                        </Link>
-                        <Button
+                        <CardHeader className="flex-1">
+                          <CardTitle className="text-lg font-bold line-clamp-2 leading-snug">{s.title.en}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 pt-0">
+                          <div className="flex items-center text-muted-foreground text-sm">
+                            <GraduationCap size={14} className="mr-2 text-red-500 shrink-0" />
+                            <span className="truncate">{s.university.en}</span>
+                          </div>
+                          <div className="flex items-center text-muted-foreground text-sm">
+                            <MapPin size={14} className="mr-2 text-red-500 shrink-0" />
+                            {s.country.en}
+                          </div>
+                          <div className="flex items-center text-muted-foreground text-sm">
+                            <Calendar size={14} className="mr-2 text-red-500 shrink-0" />
+                            <span className={new Date(s.deadline).getTime() - Date.now() < 30 * 86400000 ? 'text-red-500 font-medium' : ''}>
+                              {formatDeadline(s.deadline)}
+                            </span>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="gap-2 pt-0">
+                          <Link to={`/scholarships/${s._id}`} className="flex-1">
+                            <Button variant="outline" className="w-full border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold">
+                              View Details
+                            </Button>
+                          </Link>
+                          <Button
                             variant={isCompared ? "default" : "outline"}
                             onClick={() => isCompared ? removeScholarship(s._id) : addScholarship(s)}
                             className={`rounded-xl shadow-none h-10 w-10 p-0 border-border ${isCompared ? 'bg-red-600 hover:bg-red-700 text-white' : 'text-muted-foreground'}`}
                           >
                             <Scale className="w-4 h-4" />
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-            {visibleCount < scholarships.length && (
-              <div className="flex justify-center mt-8">
-                <Button
-                  variant="outline"
-                  onClick={() => setVisibleCount(prev => prev + 5)}
-                  className="rounded-full px-8 py-6 border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold text-sm shadow-sm"
-                >
-                  <ChevronDown className="w-4 h-4 mr-2" />
-                  {isAr ? `عرض المزيد (${scholarships.length - visibleCount} متبقية)` : `Load More (${scholarships.length - visibleCount} left)`}
-                </Button>
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
               </div>
-            )}
+              {visibleCount < scholarships.length && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleCount(prev => prev + 5)}
+                    className="rounded-full px-8 py-6 border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold text-sm shadow-sm"
+                  >
+                    <ChevronDown className="w-4 h-4 mr-2" />
+                    {isAr ? `عرض المزيد (${scholarships.length - visibleCount} متبقية)` : `Load More (${scholarships.length - visibleCount} left)`}
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -273,7 +273,7 @@ export default function Search() {
                 <p className="text-xs text-muted-foreground">{compareList.length} / 3 selected</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Link to="/compare">
                 <Button className="rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-sm text-sm h-9 px-4">

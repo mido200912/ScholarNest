@@ -27,7 +27,7 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.post('https://scholar-nest-1.vercel.app/api/auth/register', {
+      const { data } = await axios.post('https://scholarnest.up.railway.app/api/auth/register', {
         name,
         email,
         password,
@@ -130,12 +130,12 @@ export default function Register() {
       <div className="hidden lg:flex w-1/2 bg-background items-center justify-center relative overflow-hidden">
         {/* Minimal abstract grid */}
         <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 opacity-20">
-           {Array.from({ length: 36 }).map((_, i) => (
-             <div key={i} className="border-r border-b border-border"></div>
-           ))}
+          {Array.from({ length: 36 }).map((_, i) => (
+            <div key={i} className="border-r border-b border-border"></div>
+          ))}
         </div>
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1, delay: 0.2 }}
@@ -145,7 +145,7 @@ export default function Register() {
           <p className="text-muted-foreground leading-relaxed">
             By joining ScholarNest, you gain access to an exclusive database of fully funded opportunities, tailored AI guidance, and a community of ambitious scholars globally.
           </p>
-          
+
           <div className="mt-8 pt-8 border-t border-border flex flex-col gap-4">
             {['AI Profile Matching', 'Real-time Updates', 'Cover Letter Generator'].map((feature, i) => (
               <div key={i} className="flex items-center gap-3">

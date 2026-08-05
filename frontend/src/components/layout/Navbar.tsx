@@ -20,7 +20,7 @@ export default function Navbar() {
 
   useEffect(() => {
     if (user && token) {
-      axios.get('https://scholar-nest-1.vercel.app/api/notifications', {
+      axios.get('https://scholarnest.up.railway.app/api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => setNotifications(res.data.data)).catch(console.error);
     }
@@ -29,7 +29,7 @@ export default function Navbar() {
   const markAllAsRead = async () => {
     if (!token) return;
     try {
-      await axios.put('https://scholar-nest-1.vercel.app/api/notifications/all/read', {}, {
+      await axios.put('https://scholarnest.up.railway.app/api/notifications/all/read', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
@@ -41,7 +41,7 @@ export default function Navbar() {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className="fixed w-full z-40 top-0 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 border-b border-border transition-colors duration-300"
@@ -70,14 +70,14 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-4">
           <LanguageSwitcher />
           <ThemeToggle />
-          
+
           {user ? (
             <div className="flex items-center gap-4 relative">
               {/* Notifications */}
               <div className="relative">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative rounded-full text-muted-foreground hover:text-foreground"
                 >
@@ -153,7 +153,7 @@ export default function Navbar() {
         <div className="md:hidden flex items-center gap-2">
           <ThemeToggle />
           <LanguageSwitcher />
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 text-foreground focus:outline-none"
           >
@@ -183,9 +183,9 @@ export default function Navbar() {
               <Link to="/cover-letter" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2 font-bold text-foreground hover:text-red-600 p-2">
                 <PenLine className="w-4 h-4" /> {t('nav.coverLetter')}
               </Link>
-              
+
               <div className="h-px bg-border w-full my-2"></div>
-              
+
               {user ? (
                 <>
                   <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>

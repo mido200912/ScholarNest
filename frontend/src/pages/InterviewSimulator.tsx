@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 export default function InterviewSimulator() {
   const { user } = useAuthStore();
@@ -33,26 +33,26 @@ export default function InterviewSimulator() {
     axios.get(`${API}/applications`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    .then(res => {
-      // res.data.data = { saved: [...], applying: [...], accepted: [...] }
-      const data = res.data.data;
-      const all: any[] = [
-        ...(data.saved || []),
-        ...(data.applying || []),
-        ...(data.accepted || []),
-      ];
-      // Extract the populated scholarship object from each application
-      const scholarships = all
-        .map((app: any) => app.scholarship)
-        .filter(Boolean);
-      // Deduplicate by _id
-      const unique = scholarships.filter(
-        (s: any, idx: number, arr: any[]) => arr.findIndex(x => x._id === s._id) === idx
-      );
-      setSavedScholarships(unique);
-    })
-    .catch(console.error)
-    .finally(() => setLoadingScholarships(false));
+      .then(res => {
+        // res.data.data = { saved: [...], applying: [...], accepted: [...] }
+        const data = res.data.data;
+        const all: any[] = [
+          ...(data.saved || []),
+          ...(data.applying || []),
+          ...(data.accepted || []),
+        ];
+        // Extract the populated scholarship object from each application
+        const scholarships = all
+          .map((app: any) => app.scholarship)
+          .filter(Boolean);
+        // Deduplicate by _id
+        const unique = scholarships.filter(
+          (s: any, idx: number, arr: any[]) => arr.findIndex(x => x._id === s._id) === idx
+        );
+        setSavedScholarships(unique);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingScholarships(false));
   }, [token]);
 
   useEffect(() => {
@@ -238,11 +238,10 @@ export default function InterviewSimulator() {
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 text-white font-bold ${m.role === 'user' ? 'bg-red-600' : 'bg-emerald-600'}`}>
                     {m.role === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                   </div>
-                  <div className={`px-4 py-3 rounded-2xl whitespace-pre-wrap text-sm leading-relaxed shadow-sm ${
-                    m.role === 'user'
+                  <div className={`px-4 py-3 rounded-2xl whitespace-pre-wrap text-sm leading-relaxed shadow-sm ${m.role === 'user'
                       ? 'bg-red-600 text-white rounded-tr-sm'
                       : 'bg-white dark:bg-slate-800 border border-border text-foreground rounded-tl-sm'
-                  }`}>
+                    }`}>
                     {m.content}
                   </div>
                 </motion.div>

@@ -9,7 +9,7 @@ import { Label } from '../components/ui/label';
 import { useToast } from '../components/ui/Toast';
 import axios from 'axios';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 export default function Profile() {
   const { user, setUser } = useAuthStore();
@@ -23,7 +23,7 @@ export default function Profile() {
     englishLevel: '',
     targetCountries: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function Profile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const targetCountriesArray = formData.targetCountries
         .split(',')
@@ -93,7 +93,7 @@ export default function Profile() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             {/* Basic Info */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-border pb-2">

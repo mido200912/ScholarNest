@@ -1,1 +1,1 @@
-export const API_BASE = 'https://scholar-nest-1.vercel.app/api';
+export const API_BASE = 'https://scholarnest.up.railway.app/api';

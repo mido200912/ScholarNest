@@ -26,7 +26,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.post('https://scholar-nest-1.vercel.app/api/auth/login', {
+      const { data } = await axios.post('https://scholarnest.up.railway.app/api/auth/login', {
         email,
         password,
       });
@@ -117,7 +117,7 @@ export default function Login() {
       {/* Right side (Visual) */}
       <div className="hidden lg:flex w-1/2 bg-muted items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-background/5" />
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
@@ -131,7 +131,7 @@ export default function Login() {
           </blockquote>
           <p className="text-muted-foreground tracking-widest uppercase text-sm font-semibold">John Dewey</p>
         </motion.div>
-        
+
         {/* Minimal geometric decoration */}
         <div className="absolute right-0 bottom-0 w-96 h-96 border-l border-t border-border translate-x-1/2 translate-y-1/2 rounded-tl-full opacity-50" />
       </div>

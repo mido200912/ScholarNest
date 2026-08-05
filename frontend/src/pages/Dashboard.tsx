@@ -16,7 +16,7 @@ import axios from 'axios';
 import AdminDashboard from './AdminDashboard';
 import { useToast } from '../components/ui/Toast';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 interface Scholarship {
   _id: string;
@@ -57,7 +57,7 @@ export default function Dashboard() {
   const [loadingMyScholarships, setLoadingMyScholarships] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  
+
   // Cover Letter state
   const [clLoading, setClLoading] = useState<string | null>(null);
   const [clModalOpen, setClModalOpen] = useState(false);
@@ -197,7 +197,7 @@ export default function Dashboard() {
       window.location.href = '/profile';
       return;
     }
-    
+
     setClLoading(scholarshipId);
     try {
       const { data } = await axios.post(`${API}/ai/cover-letter`, { scholarshipId }, {
@@ -219,10 +219,10 @@ export default function Dashboard() {
   };
 
   const tabs = [
-    { id: 'saved',    label: 'Saved',       count: applications.saved.length,    icon: Bookmark },
-    { id: 'applying', label: 'In Progress',  count: applications.applying.length, icon: Clock },
-    { id: 'accepted', label: 'Accepted',     count: applications.accepted.length, icon: GraduationCap },
-    { id: 'matches',  label: 'Perfect Matches', count: matchedScholarships.length, icon: Sparkles },
+    { id: 'saved', label: 'Saved', count: applications.saved.length, icon: Bookmark },
+    { id: 'applying', label: 'In Progress', count: applications.applying.length, icon: Clock },
+    { id: 'accepted', label: 'Accepted', count: applications.accepted.length, icon: GraduationCap },
+    { id: 'matches', label: 'Perfect Matches', count: matchedScholarships.length, icon: Sparkles },
     { id: 'mysubmissions', label: 'My Submissions', count: myScholarships.length, icon: FileText },
   ];
 
@@ -233,7 +233,7 @@ export default function Dashboard() {
     const date = new Date(d);
     const diff = Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     const label = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    if (diff < 0)  return `${label} (Expired)`;
+    if (diff < 0) return `${label} (Expired)`;
     if (diff < 14) return `${label} (${diff}d left)`;
     return label;
   };
@@ -255,21 +255,21 @@ export default function Dashboard() {
     setSuccessContrib('');
     try {
       await axios.post(`${API}/scholarships`, {
-        title:       { en: form.titleEn,   ar: form.titleAr   },
-        description: { en: form.descEn,    ar: form.descAr    },
-        country:     { en: form.countryEn, ar: form.countryAr },
-        university:  { en: form.uniEn,     ar: form.uniAr     },
-        degree:      form.degree,
+        title: { en: form.titleEn, ar: form.titleAr },
+        description: { en: form.descEn, ar: form.descAr },
+        country: { en: form.countryEn, ar: form.countryAr },
+        university: { en: form.uniEn, ar: form.uniAr },
+        degree: form.degree,
         fundingType: form.fundingType,
-        deadline:    new Date(form.deadline).toISOString(),
-        link:        form.link,
-        image:       form.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
-        keywords:    ['Scholarship', form.countryEn, form.degree],
+        deadline: new Date(form.deadline).toISOString(),
+        link: form.link,
+        image: form.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
+        keywords: ['Scholarship', form.countryEn, form.degree],
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       setSuccessContrib('Submitted for review! Thank you for contributing.');
       toastSuccess('Submitted!', 'Your scholarship is pending review.');
-      setForm({ titleEn:'', titleAr:'', descEn:'', descAr:'', countryEn:'', countryAr:'', uniEn:'', uniAr:'', degree:'Bachelor', fundingType:'Fully Funded', deadline:'', link:'', image:'' });
+      setForm({ titleEn: '', titleAr: '', descEn: '', descAr: '', countryEn: '', countryAr: '', uniEn: '', uniAr: '', degree: 'Bachelor', fundingType: 'Fully Funded', deadline: '', link: '', image: '' });
     } catch {
       toastError('Submission failed', 'Please check all required fields.');
     } finally {
@@ -534,10 +534,10 @@ export default function Dashboard() {
 
                                 {/* Actions */}
                                 <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto items-center">
-                                  
+
                                   {/* AI Cover Letter Button */}
-                                  <Button 
-                                    onClick={() => handleGenerateCL(s._id, s.title?.en)} 
+                                  <Button
+                                    onClick={() => handleGenerateCL(s._id, s.title?.en)}
                                     disabled={clLoading === s._id}
                                     className="rounded-none bg-gradient-to-r from-red-600 to-red-600 hover:from-red-700 hover:to-red-700 text-white shadow-sm text-xs h-9 px-3 w-full sm:w-auto flex items-center justify-center gap-1.5"
                                   >
@@ -600,11 +600,10 @@ export default function Dashboard() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                   <h3 className="text-base font-semibold truncate">{s.title?.en}</h3>
-                                  <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                    s.status === 'approved' ? 'bg-green-500/10 text-green-600' :
-                                    s.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600' :
-                                    'bg-red-500/10 text-red-600'
-                                  }`}>
+                                  <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${s.status === 'approved' ? 'bg-green-500/10 text-green-600' :
+                                      s.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600' :
+                                        'bg-red-500/10 text-red-600'
+                                    }`}>
                                     {s.status}
                                   </span>
                                 </div>
@@ -687,11 +686,11 @@ export default function Dashboard() {
 
                                 {/* Actions */}
                                 <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto items-center">
-                                  
+
                                   {/* AI Cover Letter Button (only for Saved & Applying) */}
                                   {(app.status === 'saved' || app.status === 'applying') && (
-                                    <Button 
-                                      onClick={() => handleGenerateCL(s._id, s.title?.en)} 
+                                    <Button
+                                      onClick={() => handleGenerateCL(s._id, s.title?.en)}
                                       disabled={clLoading === s._id}
                                       className="rounded-none bg-gradient-to-r from-red-600 to-red-600 hover:from-red-700 hover:to-red-700 text-white shadow-sm text-xs h-9 px-3 w-full sm:w-auto flex items-center justify-center gap-1.5"
                                     >
@@ -759,7 +758,7 @@ export default function Dashboard() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              
+
               <div className="p-5 overflow-y-auto flex-1">
                 <div className="text-sm leading-relaxed whitespace-pre-wrap font-serif text-foreground/90 p-4 bg-background border border-border rounded-lg shadow-inner">
                   {currentCl}

@@ -11,7 +11,7 @@ import {
   ChevronRight, Lightbulb, BookOpen, MessageSquare
 } from 'lucide-react';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 export default function CoverLetterAssistant() {
   const { user } = useAuthStore();
@@ -140,22 +140,20 @@ ${letter}`
         <div className="flex gap-2 mb-8">
           <button
             onClick={() => setActiveTab('learn')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              activeTab === 'learn'
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors ${activeTab === 'learn'
                 ? 'bg-foreground text-background'
                 : 'bg-muted text-muted-foreground hover:text-foreground'
-            }`}
+              }`}
           >
             <BookOpen className="w-4 h-4" />
             {isAr ? 'تعلم الكتابة' : 'How to Write'}
           </button>
           <button
             onClick={() => setActiveTab('review')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              activeTab === 'review'
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors ${activeTab === 'review'
                 ? 'bg-foreground text-background'
                 : 'bg-muted text-muted-foreground hover:text-foreground'
-            }`}
+              }`}
           >
             <MessageSquare className="w-4 h-4" />
             {isAr ? 'قيّم خطابي' : 'Review My Letter'}

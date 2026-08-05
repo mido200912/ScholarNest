@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 export default function Compare() {
   const { scholarships, removeScholarship, clearCompare } = useCompareStore();
@@ -67,7 +67,7 @@ export default function Compare() {
         ) : (
           <div className="overflow-x-auto pb-8">
             <div className="min-w-[800px] grid grid-cols-4 gap-6">
-              
+
               {/* Features Column */}
               <div className="col-span-1 pt-48 space-y-12 pr-6 border-r border-border font-medium text-muted-foreground">
                 <div className="flex items-center gap-2"><GraduationCap className="w-4 h-4" /> University</div>
@@ -79,15 +79,15 @@ export default function Compare() {
 
               {/* Scholarship Columns */}
               {scholarships.map((s, index) => (
-                <motion.div 
-                  key={s._id} 
+                <motion.div
+                  key={s._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className="col-span-1 flex flex-col relative bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-xl transition-shadow"
                 >
                   {/* Remove Button */}
-                  <button 
+                  <button
                     onClick={() => removeScholarship(s._id)}
                     className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
                   >

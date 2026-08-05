@@ -13,7 +13,7 @@ import {
   Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil
 } from 'lucide-react';
 
-const API = 'https://scholar-nest-1.vercel.app/api';
+const API = 'https://scholarnest.up.railway.app/api';
 
 // ── JSON Schema Template ────────────────────────────────────────────────────
 const JSON_TEMPLATE = `[
@@ -210,19 +210,19 @@ export default function AdminDashboard() {
       const keywords = formData.keywordsRaw
         .split(',').map(k => k.trim()).filter(Boolean);
       await axios.post(`${API}/scholarships`, {
-        title:       { en: formData.titleEn,   ar: formData.titleAr   },
-        description: { en: formData.descEn,    ar: formData.descAr    },
-        country:     { en: formData.countryEn, ar: formData.countryAr },
-        university:  { en: formData.uniEn,     ar: formData.uniAr     },
-        degree:      formData.degree,
+        title: { en: formData.titleEn, ar: formData.titleAr },
+        description: { en: formData.descEn, ar: formData.descAr },
+        country: { en: formData.countryEn, ar: formData.countryAr },
+        university: { en: formData.uniEn, ar: formData.uniAr },
+        degree: formData.degree,
         fundingType: formData.fundingType,
-        deadline:    new Date(formData.deadline).toISOString(),
-        link:        formData.link,
-        image:       formData.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
-        keywords:    keywords.length ? keywords : ['Scholarship', formData.countryEn, formData.degree],
+        deadline: new Date(formData.deadline).toISOString(),
+        link: formData.link,
+        image: formData.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
+        keywords: keywords.length ? keywords : ['Scholarship', formData.countryEn, formData.degree],
       }, { headers });
       toastSuccess('Scholarship published!', `"${formData.titleEn}" is now live.`);
-      setFormData({ titleEn:'', titleAr:'', descEn:'', descAr:'', countryEn:'', countryAr:'', uniEn:'', uniAr:'', degree:'Bachelor', fundingType:'Fully Funded', deadline:'', link:'', image:'', keywordsRaw:'' });
+      setFormData({ titleEn: '', titleAr: '', descEn: '', descAr: '', countryEn: '', countryAr: '', uniEn: '', uniAr: '', degree: 'Bachelor', fundingType: 'Fully Funded', deadline: '', link: '', image: '', keywordsRaw: '' });
     } catch (err: any) {
       toastError('Failed to publish', err.response?.data?.message || 'Check all required fields.');
     } finally {
@@ -307,10 +307,10 @@ export default function AdminDashboard() {
 
   // ── Sidebar Tabs ─────────────────────────────────────────────────────────────
   const tabs = [
-    { id: 'pending', label: 'Pending Review', icon: Clock,      badge: pendingScholarships.length || undefined },
-    { id: 'manage',  label: 'Manage Scholarships', icon: Search, badge: allScholarshipsTotal || undefined },
-    { id: 'add',     label: 'Add Scholarship', icon: Plus,       badge: undefined },
-    { id: 'bulk',    label: 'Bulk Import (JSON)', icon: FileJson, badge: undefined },
+    { id: 'pending', label: 'Pending Review', icon: Clock, badge: pendingScholarships.length || undefined },
+    { id: 'manage', label: 'Manage Scholarships', icon: Search, badge: allScholarshipsTotal || undefined },
+    { id: 'add', label: 'Add Scholarship', icon: Plus, badge: undefined },
+    { id: 'bulk', label: 'Bulk Import (JSON)', icon: FileJson, badge: undefined },
     ...(user?.role === 'admin' ? [
       { id: 'users', label: 'Manage Users', icon: Users, badge: allUsersTotal || undefined },
       { id: 'staff', label: 'Manage Staff', icon: ShieldCheck, badge: staffList.length || undefined },
@@ -487,11 +487,10 @@ export default function AdminDashboard() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold truncate">{s.title?.en}</h3>
-                              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                s.status === 'approved' ? 'bg-green-500/10 text-green-600' :
-                                s.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600' :
-                                'bg-red-500/10 text-red-600'
-                              }`}>
+                              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${s.status === 'approved' ? 'bg-green-500/10 text-green-600' :
+                                  s.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600' :
+                                    'bg-red-500/10 text-red-600'
+                                }`}>
                                 {s.status}
                               </span>
                             </div>
@@ -736,10 +735,10 @@ export default function AdminDashboard() {
                 <div className="max-w-md">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Create New Assistant</h3>
                   <form onSubmit={handleAddStaff} className="space-y-4">
-                    <div className="space-y-1.5"><Label className="text-xs">Full Name</Label><Input type="text" value={staffData.name} onChange={e => setStaffData({...staffData, name: e.target.value})} required className="rounded-lg shadow-none h-10" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">Email</Label><Input type="email" value={staffData.email} onChange={e => setStaffData({...staffData, email: e.target.value})} required className="rounded-lg shadow-none h-10" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">Password</Label><Input type="password" value={staffData.password} onChange={e => setStaffData({...staffData, password: e.target.value})} required className="rounded-lg shadow-none h-10" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">Telegram Chat ID (optional)</Label><Input type="text" value={staffData.telegramChatId} onChange={e => setStaffData({...staffData, telegramChatId: e.target.value})} placeholder="e.g. 8901344688" className="rounded-lg shadow-none h-10" /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Full Name</Label><Input type="text" value={staffData.name} onChange={e => setStaffData({ ...staffData, name: e.target.value })} required className="rounded-lg shadow-none h-10" /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Email</Label><Input type="email" value={staffData.email} onChange={e => setStaffData({ ...staffData, email: e.target.value })} required className="rounded-lg shadow-none h-10" /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Password</Label><Input type="password" value={staffData.password} onChange={e => setStaffData({ ...staffData, password: e.target.value })} required className="rounded-lg shadow-none h-10" /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Telegram Chat ID (optional)</Label><Input type="text" value={staffData.telegramChatId} onChange={e => setStaffData({ ...staffData, telegramChatId: e.target.value })} placeholder="e.g. 8901344688" className="rounded-lg shadow-none h-10" /></div>
                     <Button type="submit" disabled={loading} className="w-full h-11 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">
                       {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating…</> : 'Create Assistant'}
                     </Button>
@@ -791,9 +790,8 @@ export default function AdminDashboard() {
                       <Card key={u._id} className="rounded-lg border-border shadow-none bg-card">
                         <CardContent className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                              u.role === 'admin' ? 'bg-red-500/10' : u.role === 'assistant_admin' ? 'bg-yellow-500/10' : 'bg-muted'
-                            }`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${u.role === 'admin' ? 'bg-red-500/10' : u.role === 'assistant_admin' ? 'bg-yellow-500/10' : 'bg-muted'
+                              }`}>
                               <span className="text-sm font-bold">
                                 {u.name?.charAt(0)?.toUpperCase()}
                               </span>
@@ -801,11 +799,10 @@ export default function AdminDashboard() {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-sm truncate">{u.name}</h3>
-                                <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  u.role === 'admin' ? 'bg-red-500/10 text-red-600' :
-                                  u.role === 'assistant_admin' ? 'bg-yellow-500/10 text-yellow-600' :
-                                  'bg-muted text-muted-foreground'
-                                }`}>
+                                <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-red-500/10 text-red-600' :
+                                    u.role === 'assistant_admin' ? 'bg-yellow-500/10 text-yellow-600' :
+                                      'bg-muted text-muted-foreground'
+                                  }`}>
                                   {u.role}
                                 </span>
                               </div>
