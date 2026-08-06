@@ -264,7 +264,7 @@ export default function Dashboard() {
         university: { en: form.uniEn, ar: form.uniAr },
         degree: form.degree,
         fundingType: form.fundingType,
-        deadline: new Date(form.deadline).toISOString(),
+        deadline: form.deadline && !isNaN(Date.parse(form.deadline)) ? new Date(form.deadline).toISOString() : '',
         link: form.link,
         image: form.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
         keywords: ['Scholarship', form.countryEn, form.degree],
