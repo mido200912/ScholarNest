@@ -369,7 +369,7 @@ export const getMatchedScholarships = async (req: AuthRequest, res: Response) =>
 // @access  Private/Assistant or Admin
 export const getAllScholarshipsAdmin = async (req: Request, res: Response) => {
   try {
-    const { search, status, limit = 20, page = 1 } = req.query;
+    const { search, status } = req.query;
     
     let query: any = {};
 
@@ -389,14 +389,8 @@ export const getAllScholarshipsAdmin = async (req: Request, res: Response) => {
       ];
     }
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
-    const skip = (pageNum - 1) * limitNum;
-
     const scholarships = await Scholarship.find(query)
       .populate('submittedBy', 'name email')
-      .skip(skip)
-      .limit(limitNum)
       .sort({ createdAt: -1 });
 
     const total = await Scholarship.countDocuments(query);
@@ -404,7 +398,7 @@ export const getAllScholarshipsAdmin = async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: scholarships,
-      pagination: { total, page: pageNum, pages: Math.ceil(total / limitNum) }
+      pagination: { total }
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
