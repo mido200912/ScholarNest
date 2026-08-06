@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
@@ -257,6 +257,8 @@ export default function AdminDashboard() {
     { titleEn: '', titleAr: '', descEn: '', descAr: '', countryEn: '', countryAr: '', uniEn: '', uniAr: '', degree: 'Master', fundingType: 'Fully Funded', deadline: '', link: '', image: '', keywords: '' },
   ]);
   const [csvText, setCsvText] = useState('');
+  const csvFileInput = useRef<HTMLInputElement>(null);
+  const jsonFileInput = useRef<HTMLInputElement>(null);
 
   const parseJson = (jsonText: string): any[] => {
     try {
@@ -989,19 +991,17 @@ export default function AdminDashboard() {
                 {bulkMode === 'csv' && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <label htmlFor="csv-file-upload" className="cursor-pointer">
-                        <input id="csv-file-upload" type="file" accept=".csv" onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = ev => setCsvText(ev.target?.result as string);
-                            reader.readAsText(file);
-                          }
-                        }} className="sr-only" />
-                        <Button variant="outline" className="h-10 px-4">
-                          <Upload className="w-4 h-4 mr-2" /> Upload CSV File
-                        </Button>
-                      </label>
+                      <Button variant="outline" className="h-10 px-4" onClick={() => csvFileInput.current?.click()}>
+                        <Upload className="w-4 h-4 mr-2" /> Upload CSV File
+                      </Button>
+                      <input ref={csvFileInput} type="file" accept=".csv" onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = ev => setCsvText(ev.target?.result as string);
+                          reader.readAsText(file);
+                        }
+                      }} className="hidden" />
                       <Button onClick={() => setCsvText(generateCsvTemplate())} variant="outline" size="sm" className="h-8 px-3 text-xs">
                         <FileText className="w-3.5 h-3.5 mr-1" /> Use Template
                       </Button>
@@ -1032,6 +1032,17 @@ export default function AdminDashboard() {
                       </Button>
                     </div>
 
+                    {/* CSV Format Help */}
+                    <details className="text-xs text-muted-foreground border border-border rounded-lg p-3 bg-muted/30">
+                      <summary className="cursor-pointer font-medium mb-2">CSV Format Guide (click to expand)</summary>
+                      <div className="space-y-1 font-mono">
+                        <p>Columns: title_en, title_ar, description_en, description_ar, university_en, university_ar, country_en, country_ar, degree, fundingType, deadline, applicationOpens, link, image, keywords, verificationNote</p>
+                        <p>Use quotes for fields with commas: "Engineering, Masters, Germany"</p>
+                        <p>Date format: YYYY-MM-DD (e.g., 2026-10-06)</p>
+                        <p>Click "Use Template" for a ready-to-edit example</p>
+                      </div>
+                    </details>
+
                     <textarea
                       value={csvText}
                       onChange={e => setCsvText(e.target.value)}
@@ -1053,22 +1064,33 @@ export default function AdminDashboard() {
                     <div className="flex justify-between items-center mb-2">
                       <Label className="text-xs">Your JSON Array</Label>
                       <div className="flex items-center gap-2">
-                        <label htmlFor="json-file-upload" className="cursor-pointer">
-                          <input id="json-file-upload" type="file" accept=".json" onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = ev => setBulkJson(ev.target?.result as string);
-                              reader.readAsText(file);
-                            }
-                          }} className="sr-only" />
-                          <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
-                            <Upload className="w-3.5 h-3.5 mr-1" /> Upload JSON File
-                          </Button>
-                        </label>
+                        <Button variant="outline" size="sm" className="h-8 px-3 text-xs" onClick={() => jsonFileInput.current?.click()}>
+                          <Upload className="w-3.5 h-3.5 mr-1" /> Upload JSON File
+                        </Button>
+                        <input ref={jsonFileInput} type="file" accept=".json" onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = ev => setBulkJson(ev.target?.result as string);
+                            reader.readAsText(file);
+                          }
+                        }} className="hidden" />
                         {bulkJson && <button onClick={() => { setBulkJson(''); setJsonError(''); }} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> Clear</button>}
                       </div>
                     </div>
+
+                    {/* JSON Format Help */}
+                    <details className="text-xs text-muted-foreground border border-border rounded-lg p-3 bg-muted/30 mb-2">
+                      <summary className="cursor-pointer font-medium mb-2">JSON Format Guide (click to expand)</summary>
+                      <div className="space-y-1 font-mono">
+                        <p>Supports two formats:</p>
+                        <p className="ml-2">1. Nested (backend format):</p>
+                        <pre className="ml-4 text-[10px] bg-background p-2 rounded">{'[{"title": {"en": "...", "ar": "..."}, "description": {"en": "...", "ar": "..."}, "university": {"en": "...", "ar": "..."}, "country": {"en": "...", "ar": "..."}, "degree": "Master", "fundingType": "Fully Funded", "deadline": "2026-12-31", "link": "...", "image": "...", "keywords": ["tag1", "tag2"]}]'}</pre>
+                        <p className="ml-2">2. Flat (CSV-like format):</p>
+                        <pre className="ml-4 text-[10px] bg-background p-2 rounded">{'[{"title_en": "...", "title_ar": "...", "description_en": "...", "description_ar": "...", "university_en": "...", "university_ar": "...", "country_en": "...", "country_ar": "...", "degree": "Master", "fundingType": "Fully Funded", "deadline": "2026-12-31", "link": "...", "image": "...", "keywords": "tag1, tag2"}]'}</pre>
+                      </div>
+                    </details>
+
                     <textarea
                       value={bulkJson}
                       onChange={e => { setBulkJson(e.target.value); setJsonError(''); }}
