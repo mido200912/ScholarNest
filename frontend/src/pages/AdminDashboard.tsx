@@ -986,7 +986,22 @@ export default function AdminDashboard() {
                     <p className="text-xs text-muted-foreground">Advanced users only. Use Table Editor or CSV for easier import.</p>
                     <div className="flex justify-between items-center mb-2">
                       <Label className="text-xs">Your JSON Array</Label>
-                      {bulkJson && <button onClick={() => { setBulkJson(''); setJsonError(''); }} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> Clear</button>}
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="file" accept=".json" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = ev => setBulkJson(ev.target?.result as string);
+                              reader.readAsText(file);
+                            }
+                          }} className="sr-only" />
+                          <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
+                            <Upload className="w-3.5 h-3.5 mr-1" /> Upload JSON File
+                          </Button>
+                        </label>
+                        {bulkJson && <button onClick={() => { setBulkJson(''); setJsonError(''); }} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> Clear</button>}
+                      </div>
                     </div>
                     <textarea
                       value={bulkJson}
