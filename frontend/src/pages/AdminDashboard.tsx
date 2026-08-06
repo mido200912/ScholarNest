@@ -10,7 +10,8 @@ import axios from 'axios';
 import {
   Loader2, Plus, CheckCircle, Clock, XCircle,
   ShieldCheck, Upload, FileJson, X, Tag, Sparkles,
-  Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil
+  Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil,
+  FileText, FileSpreadsheet, Table, Copy, Minus
 } from 'lucide-react';
 
 import { API_BASE as API } from '../config/api';
@@ -251,6 +252,11 @@ export default function AdminDashboard() {
   const [bulkJson, setBulkJson] = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
   const [jsonError, setJsonError] = useState('');
+  const [bulkMode, setBulkMode] = useState<'table' | 'csv' | 'json'>('table');
+  const [bulkRows, setBulkRows] = useState<any[]>([
+    { titleEn: '', titleAr: '', descEn: '', descAr: '', countryEn: '', countryAr: '', uniEn: '', uniAr: '', degree: 'Master', fundingType: 'Fully Funded', deadline: '', link: '', image: '', keywords: '' },
+  ]);
+  const [csvText, setCsvText] = useState('');
 
   const validateJsonWithAI = async (rawJson: string, parseError: string) => {
     try {
@@ -268,41 +274,56 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleBulkImport = async () => {
-    if (!bulkJson.trim()) {
-      toastError('Empty JSON', 'Please paste your JSON array first.');
+  const parseCsv = (text: string): any[] => {
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const obj: any = {};
+      headers.forEach((h, i) => { obj[h] = values[i] || ''; });
+      return obj;
+    });
+  };
+
+  const csvHeaders = [
+    'titleEn', 'titleAr', 'descEn', 'descAr', 'countryEn', 'countryAr',
+    'uniEn', 'uniAr', 'degree', 'fundingType', 'deadline', 'link', 'image', 'keywords'
+  ];
+
+  const generateCsvTemplate = () => {
+    return csvHeaders.join(',') + '\n' + 'Scholarship Title,اسم المنحة,Description,الوصف,Germany,ألمانيا,University,الجامعة,Master,Fully Funded,2025-12-31,https://apply.com,https://image.com,"Engineering, Germany, Masters"';
+  };
+
+  const rowsToJson = () => {
+    return bulkRows.map(r => ({
+      title: { en: r.titleEn, ar: r.titleAr },
+      description: { en: r.descEn, ar: r.descAr },
+      country: { en: r.countryEn, ar: r.countryAr },
+      university: { en: r.uniEn, ar: r.uniAr },
+      degree: r.degree,
+      fundingType: r.fundingType,
+      deadline: r.deadline ? new Date(r.deadline).toISOString() : '',
+      link: r.link,
+      image: r.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
+      keywords: r.keywords.split(',').map((k: string) => k.trim()).filter(Boolean),
+    })).filter(r => r.title.en || r.title.ar);
+  };
+
+  const handleBulkImport = async (scholarships: any[]) => {
+    if (!scholarships.length) {
+      toastError('Empty Data', 'No valid scholarships to import.');
       return;
     }
 
-    // 1. Parse JSON locally first
-    let parsed: any[];
-    try {
-      parsed = JSON.parse(bulkJson);
-      if (!Array.isArray(parsed)) throw new Error('Root element must be a JSON array [ ... ]');
-    } catch (e: any) {
-      setBulkLoading(true);
-      setJsonError('Analyzing error with AI...');
-      const aiExplanation = await validateJsonWithAI(bulkJson, e.message);
-      setJsonError(aiExplanation);
-      setBulkLoading(false);
-      toastError('Invalid JSON', 'AI has analyzed the error — see details below.');
-      return;
-    }
-
-    // 2. Send to backend
     setBulkLoading(true);
     setJsonError('');
     try {
-      const { data } = await axios.post(`${API}/scholarships/bulk`, { scholarships: parsed }, { headers });
-      if (data.partial) {
-        toastSuccess(`${data.count} of ${data.total} imported!`, data.message);
-        if (data.details?.length) {
-          setJsonError(`${data.failedCount} failed:\n${data.details.join('\n')}`);
-        }
-      } else {
-        toastSuccess(`${data.count} scholarships imported!`, 'All scholarships are now live.');
-        setBulkJson('');
-      }
+      const { data } = await axios.post(`${API}/scholarships/bulk`, { scholarships }, { headers });
+      toastSuccess(`${data.count} scholarships imported!`, 'All scholarships are now live.');
+      setBulkRows([{ titleEn: '', titleAr: '', descEn: '', descAr: '', countryEn: '', countryAr: '', uniEn: '', uniAr: '', degree: 'Master', fundingType: 'Fully Funded', deadline: '', link: '', image: '', keywords: '' }]);
+      setCsvText('');
+      setBulkJson('');
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Bulk import failed.';
       const details = err.response?.data?.details?.join('\n') || '';
@@ -783,55 +804,227 @@ export default function AdminDashboard() {
 
             {/* ── BULK IMPORT ── */}
             {activeTab === 'bulk' && (
-              <div className="max-w-4xl">
-                <h2 className="text-2xl font-light mb-1">Bulk Import via JSON</h2>
+              <div className="max-w-6xl">
+                <h2 className="text-2xl font-light mb-1">Bulk Import Scholarships</h2>
                 <p className="text-muted-foreground text-sm mb-6">
-                  Paste an array of scholarship objects. If your JSON has errors, the AI will explain them automatically.
+                  Import multiple scholarships at once using a table editor, CSV, or JSON.
                 </p>
 
-                {/* Template */}
-                <div className="mb-5 p-4 bg-muted/50 border border-border rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5"><FileJson className="w-3.5 h-3.5" /> JSON Template</span>
-                    <button onClick={() => setBulkJson(JSON_TEMPLATE)} className="text-xs text-red-600 hover:underline">Use Template</button>
-                  </div>
-                  <pre className="text-xs text-muted-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed">{JSON_TEMPLATE}</pre>
+                {/* Mode Tabs */}
+                <div className="flex gap-2 mb-6">
+                  {[
+                    { id: 'table' as const, label: 'Table Editor', icon: Table },
+                    { id: 'csv' as const, label: 'CSV Import', icon: FileSpreadsheet },
+                    { id: 'json' as const, label: 'JSON (Advanced)', icon: FileJson },
+                  ].map(mode => (
+                    <button
+                      key={mode.id}
+                      onClick={() => setBulkMode(mode.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        bulkMode === mode.id
+                          ? 'bg-foreground text-background'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      <mode.icon className="w-4 h-4" />
+                      {mode.label}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Textarea */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-xs">Your JSON</Label>
-                    {bulkJson && <button onClick={() => { setBulkJson(''); setJsonError(''); }} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> Clear</button>}
-                  </div>
-                  <textarea
-                    value={bulkJson}
-                    onChange={e => { setBulkJson(e.target.value); setJsonError(''); }}
-                    rows={14}
-                    placeholder='[ { "title": { "en": "..." }, ... } ]'
-                    className="w-full font-mono text-xs border border-input p-3 rounded-lg bg-background shadow-none resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                    spellCheck={false}
-                  />
-                </div>
-
-                {/* AI Error Display */}
-                {jsonError && (
-                  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <Sparkles className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1">AI Error Analysis</p>
-                        <pre className="text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap leading-relaxed">{jsonError}</pre>
+                {/* ══════════════════════════════════════════════════════════════
+                    TABLE EDITOR
+                    ═══════════════════════════════════════════════════════════ */}
+                {bulkMode === 'table' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        {bulkRows.filter(r => r.titleEn || r.titleAr).length} scholarships ready
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            const csv = [csvHeaders.join(','), ...bulkRows.map(r => csvHeaders.map(h => `"${r[h] || ''}"`).join(','))].join('\n');
+                            navigator.clipboard.writeText(csv);
+                            toastSuccess('Copied!', 'CSV copied to clipboard');
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3 text-xs"
+                        >
+                          <Copy className="w-3.5 h-3.5 mr-1" /> Copy as CSV
+                        </Button>
+                        <Button
+                          onClick={() => setBulkRows([...bulkRows, { titleEn: '', titleAr: '', descEn: '', descAr: '', countryEn: '', countryAr: '', uniEn: '', uniAr: '', degree: 'Master', fundingType: 'Fully Funded', deadline: '', link: '', image: '', keywords: '' }])}
+                          size="sm"
+                          className="h-8 px-3 text-xs"
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" /> Add Row
+                        </Button>
                       </div>
                     </div>
-                  </motion.div>
+
+                    <div className="overflow-x-auto rounded-lg border border-border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">#</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Title (EN)</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Title (AR)</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Country</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">University</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Degree</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Funding</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Deadline</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Link</th>
+                            <th className="p-2 text-left font-medium text-xs text-muted-foreground uppercase">Keywords</th>
+                            <th className="p-2 text-center font-medium text-xs text-muted-foreground uppercase">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {bulkRows.map((row, idx) => (
+                            <tr key={idx} className="border-t border-border hover:bg-muted/50">
+                              <td className="p-2 text-muted-foreground">{idx + 1}</td>
+                              <td className="p-2"><Input value={row.titleEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleEn: e.target.value }; setBulkRows(nr); }} placeholder="Title EN" className="h-8 text-xs" /></td>
+                              <td className="p-2"><Input value={row.titleAr} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleAr: e.target.value }; setBulkRows(nr); }} placeholder="Title AR" className="h-8 text-xs text-right" dir="rtl" /></td>
+                              <td className="p-2"><Input value={row.countryEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], countryEn: e.target.value }; setBulkRows(nr); }} placeholder="Country EN" className="h-8 text-xs" /></td>
+                              <td className="p-2"><Input value={row.uniEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], uniEn: e.target.value }; setBulkRows(nr); }} placeholder="University EN" className="h-8 text-xs" /></td>
+                              <td className="p-2">
+                                <select value={row.degree} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], degree: e.target.value }; setBulkRows(nr); }} className="w-full h-8 text-xs border border-input bg-background px-2 rounded">
+                                  <option>Bachelor</option><option>Master</option><option>PhD</option><option>Other</option>
+                                </select>
+                              </td>
+                              <td className="p-2">
+                                <select value={row.fundingType} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], fundingType: e.target.value }; setBulkRows(nr); }} className="w-full h-8 text-xs border border-input bg-background px-2 rounded">
+                                  <option>Fully Funded</option><option>Partially Funded</option>
+                                </select>
+                              </td>
+                              <td className="p-2"><Input type="date" value={row.deadline} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], deadline: e.target.value }; setBulkRows(nr); }} className="h-8 text-xs" /></td>
+                              <td className="p-2"><Input value={row.link} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], link: e.target.value }; setBulkRows(nr); }} placeholder="https://" className="h-8 text-xs" /></td>
+                              <td className="p-2"><Input value={row.keywords} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], keywords: e.target.value }; setBulkRows(nr); }} placeholder="Eng, CS, Masters" className="h-8 text-xs" /></td>
+                              <td className="p-2 text-center">
+                                {bulkRows.length > 1 && (
+                                  <Button onClick={() => setBulkRows(bulkRows.filter((_, i) => i !== idx))} variant="ghost" size="icon" className="text-red-500 hover:bg-red-500/10">
+                                    <Minus className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => handleBulkImport(rowsToJson())}
+                        disabled={bulkLoading || !rowsToJson().length}
+                        className="h-11 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold px-6"
+                      >
+                        {bulkLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing…</> : <><Upload className="w-4 h-4 mr-2" /> Import All ({rowsToJson().length})</>}
+                      </Button>
+                    </div>
+                  </div>
                 )}
 
-                <Button onClick={handleBulkImport} disabled={bulkLoading || !bulkJson.trim()}
-                  className="w-full h-11 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">
-                  {bulkLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing…</> : <><Upload className="w-4 h-4 mr-2" /> Import Scholarships</>}
-                </Button>
+                {/* ═════════════════════════════════════════════════════════════
+                    CSV IMPORT
+                    ═══════════════════════════════════════════════════════════ */}
+                {bulkMode === 'csv' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="file" accept=".csv" onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = ev => setCsvText(ev.target?.result as string);
+                            reader.readAsText(file);
+                          }
+                        }} className="sr-only" />
+                        <Button variant="outline" className="h-10 px-4">
+                          <Upload className="w-4 h-4 mr-2" /> Upload CSV File
+                        </Button>
+                      </label>
+                      <Button onClick={() => setCsvText(generateCsvTemplate())} variant="outline" size="sm" className="h-8 px-3 text-xs">
+                        <FileText className="w-3.5 h-3.5 mr-1" /> Use Template
+                      </Button>
+                      <Button onClick={() => {
+                        const parsed = parseCsv(csvText);
+                        if (parsed.length) {
+                          setBulkRows(parsed.map(p => ({
+                            titleEn: p.titleEn || '', titleAr: p.titleAr || '', descEn: p.descEn || '', descAr: p.descAr || '',
+                            countryEn: p.countryEn || '', countryAr: p.countryAr || '', uniEn: p.uniEn || '', uniAr: p.uniAr || '',
+                            degree: p.degree || 'Master', fundingType: p.fundingType || 'Fully Funded',
+                            deadline: p.deadline || '', link: p.link || '', image: p.image || '', keywords: p.keywords || '',
+                          })));
+                          setBulkMode('table');
+                          toastSuccess('CSV Parsed', `${parsed.length} rows loaded into table editor`);
+                        }
+                      }} size="sm" className="h-8 px-3 text-xs">
+                        <Table className="w-3.5 h-3.5 mr-1" /> Load into Table
+                      </Button>
+                    </div>
+
+                    <textarea
+                      value={csvText}
+                      onChange={e => setCsvText(e.target.value)}
+                      rows={12}
+                      placeholder={generateCsvTemplate()}
+                      className="w-full font-mono text-xs border border-input p-3 rounded-lg bg-background shadow-none resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                      spellCheck={false}
+                    />
+                    <p className="text-xs text-muted-foreground">Columns: {csvHeaders.join(', ')}</p>
+                  </div>
+                )}
+
+                {/* ════════════════════════════════════════════════════════════
+                    JSON (Advanced)
+                    ══════════════════════════════════════════════════════════ */}
+                {bulkMode === 'json' && (
+                  <div className="space-y-4">
+                    <p className="text-xs text-muted-foreground">Advanced users only. Use Table Editor or CSV for easier import.</p>
+                    <div className="flex justify-between items-center mb-2">
+                      <Label className="text-xs">Your JSON Array</Label>
+                      {bulkJson && <button onClick={() => { setBulkJson(''); setJsonError(''); }} className="text-xs text-muted-foreground hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> Clear</button>}
+                    </div>
+                    <textarea
+                      value={bulkJson}
+                      onChange={e => { setBulkJson(e.target.value); setJsonError(''); }}
+                      rows={14}
+                      placeholder='[ { "title": { "en": "..." }, ... } ]'
+                      className="w-full font-mono text-xs border border-input p-3 rounded-lg bg-background shadow-none resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                      spellCheck={false}
+                    />
+                    {jsonError && (
+                      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                        className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <Sparkles className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1">AI Error Analysis</p>
+                            <pre className="text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap leading-relaxed">{jsonError}</pre>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                    <Button
+                      onClick={() => {
+                        try {
+                          const parsed = JSON.parse(bulkJson);
+                          handleBulkImport(Array.isArray(parsed) ? parsed : [parsed]);
+                        } catch (e: any) {
+                          setJsonError('Analyzing...');
+                          validateJsonWithAI(bulkJson, e.message).then(setJsonError);
+                        }
+                      }}
+                      disabled={bulkLoading || !bulkJson.trim()}
+                      className="w-full h-11 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold"
+                    >
+                      {bulkLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importing…</> : <><Upload className="w-4 h-4 mr-2" /> Import Scholarships</>}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
