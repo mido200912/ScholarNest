@@ -37,6 +37,19 @@ const JSON_TEMPLATE = `[
 ]`;
 
 export default function AdminDashboard() {
+  const padDailyData = (data: { _id: string, count: number }[]) => {
+    if (data.length >= 7) return data;
+    const padded = [...data];
+    // get last date or today
+    const lastDate = data.length > 0 ? new Date(data[data.length - 1]._id) : new Date();
+    // make sure we have at least 7 days
+    while (padded.length < 7) {
+      lastDate.setDate(lastDate.getDate() - 1);
+      padded.unshift({ _id: lastDate.toISOString().split('T')[0], count: 0 });
+    }
+    return padded;
+  };
+
   const { user } = useAuthStore();
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   const [activeTab, setActiveTab] = useState<'analytics' | 'pending' | 'add' | 'bulk' | 'staff' | 'manage' | 'users'>('analytics');
@@ -588,7 +601,7 @@ export default function AdminDashboard() {
                         <h3 className="font-semibold mb-4">User Growth (Last 30 Days)</h3>
                         <div className="h-[250px]">
                           <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={analytics.daily?.dailyUsers || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={padDailyData(analytics.daily?.dailyUsers || [])} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                               <defs>
                                 <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                                   <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
@@ -596,10 +609,10 @@ export default function AdminDashboard() {
                                 </linearGradient>
                               </defs>
                               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                              <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
-                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} minTickGap={30} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} allowDecimals={false} />
                               <RechartsTooltip contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
-                              <Area type="monotone" dataKey="count" stroke="#ef4444" fillOpacity={1} fill="url(#colorUsers)" />
+                              <Area type="monotone" dataKey="count" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
                             </AreaChart>
                           </ResponsiveContainer>
                         </div>
@@ -612,21 +625,21 @@ export default function AdminDashboard() {
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
-                                data={analytics.topCountries || []}
+                                data={analytics.topCountries?.length ? analytics.topCountries : [{_id: 'None', count: 1}]}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={60}
-                                outerRadius={90}
+                                outerRadius={80}
                                 paddingAngle={5}
                                 dataKey="count"
                                 nameKey="_id"
                               >
-                                {(analytics.topCountries || []).map((_: any, index: number) => (
-                                  <Cell key={`cell-${index}`} fill={['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]} />
+                                {(analytics.topCountries?.length ? analytics.topCountries : [{_id: 'None', count: 1}]).map((_: any, index: number) => (
+                                  <Cell key={`cell-${index}`} fill={analytics.topCountries?.length ? ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][index % 5] : 'hsl(var(--muted))'} />
                                 ))}
                               </Pie>
-                              <RechartsTooltip contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
-                              <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                              {analytics.topCountries?.length > 0 && <RechartsTooltip contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />}
+                              <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '12px', right: 0 }} iconType="circle" />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
@@ -639,11 +652,11 @@ export default function AdminDashboard() {
                         <h3 className="font-semibold mb-4">Degrees Distribution</h3>
                         <div className="h-[250px]">
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={analytics.degreesDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <BarChart data={analytics.degreesDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} maxBarSize={50}>
                               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                               <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
-                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
-                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} allowDecimals={false} />
+                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted)/0.5)'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
                               <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
@@ -654,11 +667,11 @@ export default function AdminDashboard() {
                         <h3 className="font-semibold mb-4">Funding Types</h3>
                         <div className="h-[250px]">
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={analytics.fundingDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <BarChart data={analytics.fundingDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} maxBarSize={50}>
                               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                               <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
-                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
-                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} allowDecimals={false} />
+                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted)/0.5)'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
                               <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
