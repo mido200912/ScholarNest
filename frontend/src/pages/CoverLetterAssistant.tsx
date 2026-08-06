@@ -30,6 +30,10 @@ export default function CoverLetterAssistant() {
       toastError(isAr ? 'اكتب الخطاب' : 'Write your letter', isAr ? 'الصق خطاب النية في المربع' : 'Paste your cover letter in the text box');
       return;
     }
+    if (!user?.token) {
+      toastError(isAr ? 'غير مسجل الدخول' : 'Not logged in', isAr ? 'يرجى تسجيل الدخول أولاً' : 'Please log in first');
+      return;
+    }
     setLoading(true);
     setFeedback('');
     try {
@@ -64,8 +68,12 @@ ${letter}`
         headers: { Authorization: `Bearer ${user?.token}` }
       });
       setFeedback(data.message?.content || 'No feedback generated.');
-    } catch {
-      toastError('Error', isAr ? 'فشل في تحليل الخطاب' : 'Failed to analyze the letter');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        toastError(isAr ? 'انتهت الجلسة' : 'Session expired', isAr ? 'يرجى تسجيل الدخول مرة أخرى' : 'Please log in again');
+      } else {
+        toastError('Error', isAr ? 'فشل في تحليل الخطاب' : 'Failed to analyze the letter');
+      }
     } finally {
       setLoading(false);
     }

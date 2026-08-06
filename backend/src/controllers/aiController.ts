@@ -104,7 +104,7 @@ const tools = [
     type: "function",
     function: {
       name: "search_internet",
-      description: "Search the real internet for external scholarships. ONLY use this if deepSearch is enabled AND you cannot find what the user needs in the local database.",
+      description: "Search the real internet for external scholarships or general information. Use this if you cannot find what the user needs in the local database, or if they ask for external resources.",
       parameters: {
         type: "object",
         properties: {
@@ -121,7 +121,7 @@ const tools = [
 
 export const chatWithAI = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { messages, deepSearch } = req.body;
+    const { messages } = req.body;
     
     const systemPrompt = {
       role: 'system',
@@ -132,7 +132,7 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
       If the user is asking for scholarships, use the available tools to search for them.`
     };
 
-    const availableTools = deepSearch ? tools : [tools[0]];
+    const availableTools = tools; // Always provide all tools
     let currentMessages = [systemPrompt, ...messages];
 
     // Try Groq with tool support first

@@ -292,6 +292,9 @@ export default function AdminDashboard() {
 
   const validateJsonWithAI = async (rawJson: string, parseError: string) => {
     try {
+      if (!user?.token) {
+        return 'Authentication required. Please log in to use AI validation.';
+      }
       const { data } = await axios.post(`${API}/ai/chat`, {
         messages: [{
           role: 'user',
@@ -301,7 +304,10 @@ export default function AdminDashboard() {
         headers: { Authorization: `Bearer ${user?.token}` }
       });
       return data.message?.content || parseError;
-    } catch {
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        return 'Session expired. Please log in again to use AI validation.';
+      }
       return parseError;
     }
   };
@@ -991,7 +997,7 @@ export default function AdminDashboard() {
                             <th className="p-2 text-center font-medium text-xs text-muted-foreground uppercase">Actions</th>
                           </tr>
                         </thead>
-                        <tbody>
+<tbody>
                           {bulkRows.map((row, idx) => {
                             const scholarship = rowsToJson()[idx];
                             const { errors: rowErrors } = scholarship ? validateScholarships([scholarship]) : { errors: [] };
@@ -1008,32 +1014,33 @@ export default function AdminDashboard() {
                                     idx + 1
                                   )}
                                 </td>
-                              <td className="p-2"><Input value={row.titleEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleEn: e.target.value }; setBulkRows(nr); }} placeholder="Title EN" className="h-8 text-xs" /></td>
-                              <td className="p-2"><Input value={row.titleAr} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleAr: e.target.value }; setBulkRows(nr); }} placeholder="Title AR" className="h-8 text-xs text-right" dir="rtl" /></td>
-                              <td className="p-2"><Input value={row.countryEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], countryEn: e.target.value }; setBulkRows(nr); }} placeholder="Country EN" className="h-8 text-xs" /></td>
-                              <td className="p-2"><Input value={row.uniEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], uniEn: e.target.value }; setBulkRows(nr); }} placeholder="University EN" className="h-8 text-xs" /></td>
-                              <td className="p-2">
-                                <select value={row.degree} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], degree: e.target.value }; setBulkRows(nr); }} className="w-full h-8 text-xs border border-input bg-background px-2 rounded">
-                                  <option>Bachelor</option><option>Master</option><option>PhD</option><option>Other</option>
-                                </select>
-                              </td>
-                              <td className="p-2">
-                                <select value={row.fundingType} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], fundingType: e.target.value }; setBulkRows(nr); }} className="w-full h-8 text-xs border border-input bg-background px-2 rounded">
-                                  <option>Fully Funded</option><option>Partially Funded</option>
-                                </select>
-                              </td>
-                              <td className="p-2"><Input type="date" value={row.deadline} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], deadline: e.target.value }; setBulkRows(nr); }} className="h-8 text-xs" /></td>
-                              <td className="p-2"><Input value={row.link} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], link: e.target.value }; setBulkRows(nr); }} placeholder="https://" className="h-8 text-xs" /></td>
-                              <td className="p-2"><Input value={row.keywords} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], keywords: e.target.value }; setBulkRows(nr); }} placeholder="Eng, CS, Masters" className="h-8 text-xs" /></td>
-                              <td className="p-2 text-center">
-                                {bulkRows.length > 1 && (
-                                  <Button onClick={() => setBulkRows(bulkRows.filter((_, i) => i !== idx))} variant="ghost" size="icon" className="text-red-500 hover:bg-red-500/10">
-                                    <Minus className="w-3.5 h-3.5" />
-                                  </Button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                                <td className="p-2"><Input value={row.titleEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleEn: e.target.value }; setBulkRows(nr); }} placeholder="Title EN" className="h-8 text-xs" /></td>
+                                <td className="p-2"><Input value={row.titleAr} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleAr: e.target.value }; setBulkRows(nr); }} placeholder="Title AR" className="h-8 text-xs text-right" dir="rtl" /></td>
+                                <td className="p-2"><Input value={row.countryEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], countryEn: e.target.value }; setBulkRows(nr); }} placeholder="Country EN" className="h-8 text-xs" /></td>
+                                <td className="p-2"><Input value={row.uniEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], uniEn: e.target.value }; setBulkRows(nr); }} placeholder="University EN" className="h-8 text-xs" /></td>
+                                <td className="p-2">
+                                  <select value={row.degree} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], degree: e.target.value }; setBulkRows(nr); }} className="w-full h-8 text-xs border border-input bg-background px-2 rounded">
+                                    <option>Bachelor</option><option>Master</option><option>PhD</option><option>Other</option>
+                                  </select>
+                                </td>
+                                <td className="p-2">
+                                  <select value={row.fundingType} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], fundingType: e.target.value }; setBulkRows(nr); }} className="w-full h-8 text-xs border border-input bg-background px-2 rounded">
+                                    <option>Fully Funded</option><option>Partially Funded</option>
+                                  </select>
+                                </td>
+                                <td className="p-2"><Input type="date" value={row.deadline} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], deadline: e.target.value }; setBulkRows(nr); }} className="h-8 text-xs" /></td>
+                                <td className="p-2"><Input value={row.link} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], link: e.target.value }; setBulkRows(nr); }} placeholder="https://" className="h-8 text-xs" /></td>
+                                <td className="p-2"><Input value={row.keywords} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], keywords: e.target.value }; setBulkRows(nr); }} placeholder="Eng, CS, Masters" className="h-8 text-xs" /></td>
+                                <td className="p-2 text-center">
+                                  {bulkRows.length > 1 && (
+                                    <Button onClick={() => setBulkRows(bulkRows.filter((_, i) => i !== idx))} variant="ghost" size="icon" className="text-red-500 hover:bg-red-500/10">
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>

@@ -21,7 +21,6 @@ export default function AIChat() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [deepSearch, setDeepSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,6 +30,14 @@ export default function AIChat() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
+
+    if (!user?.token) {
+      setMessages([...messages, {
+        role: 'ai',
+        text: '❌ يرجى تسجيل الدخول أولاً لاستخدام المساعد الذكي.'
+      }]);
+      return;
+    }
 
     const userText = input.trim();
     const newMessages: Message[] = [...messages, { role: 'user', text: userText }];
@@ -45,8 +52,7 @@ export default function AIChat() {
       }));
 
       const { data } = await axios.post(`${API}/ai/chat`, {
-        messages: apiMessages,
-        deepSearch
+        messages: apiMessages
       }, {
         headers: { Authorization: `Bearer ${user?.token}` }
       });
@@ -55,11 +61,18 @@ export default function AIChat() {
         role: 'ai',
         text: data.message?.content || 'عذراً، لم أتمكن من الرد الآن.'
       }]);
-    } catch {
-      setMessages([...newMessages, {
-        role: 'ai',
-        text: 'عذراً، حدث خطأ في الاتصال. يرجى التأكد من أن الخادم يعمل.'
-      }]);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setMessages([...newMessages, {
+          role: 'ai',
+          text: '❌ انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.'
+        }]);
+      } else {
+        setMessages([...newMessages, {
+          role: 'ai',
+          text: 'عذراً، حدث خطأ في الاتصال. يرجى التأكد من أن الخادم يعمل.'
+        }]);
+      }
     } finally {
       setLoading(false);
     }
@@ -98,27 +111,6 @@ export default function AIChat() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              {/* Deep Search Toggle */}
-              <button
-                onClick={() => setDeepSearch(!deepSearch)}
-                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all text-xs font-medium
-                  ${deepSearch ? 'bg-white/20 border-white/40' : 'bg-white/10 border-white/20 opacity-70 hover:opacity-100'}`}
-              >
-                <span className="flex items-center gap-1.5">
-                  {deepSearch ? <Globe className="w-3.5 h-3.5 text-green-300" /> : <Database className="w-3.5 h-3.5" />}
-                  {deepSearch ? 'Deep Internet Search: ON' : 'Search: Local Database Only'}
-                </span>
-                <motion.div
-                  className={`w-7 h-4 rounded-full relative ${deepSearch ? 'bg-green-400' : 'bg-white/30'}`}
-                >
-                  <motion.div
-                    className="w-3 h-3 bg-white rounded-full absolute top-0.5 shadow-sm"
-                    animate={{ left: deepSearch ? '14px' : '2px' }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
-                </motion.div>
-              </button>
-            </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth" dir="auto">
