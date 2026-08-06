@@ -38,8 +38,8 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/search" element={<Search />} />
               <Route path="/scholarships/:id" element={<ScholarshipDetails />} />
-              <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
-              <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
+              <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+              <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
               <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
               <Route path="/compare" element={<Compare />} />

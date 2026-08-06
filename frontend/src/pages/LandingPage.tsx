@@ -1,12 +1,13 @@
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../store/authStore';
 import { Button } from '../components/ui/button';
 import { 
   ArrowRight, Search, Brain, Scale, Users, 
   Bell, Star, Globe, GraduationCap, Sparkles, 
   CheckCircle, ChevronRight, Trophy, Target, Rocket, Shield,
-  MessageSquare, Bot, Zap
+  MessageSquare, Bot, Zap, LayoutDashboard
 } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 
@@ -39,6 +40,8 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
 
 export default function LandingPage() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
   const isRtl = i18n.language === 'ar';
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
@@ -125,12 +128,24 @@ export default function LandingPage() {
               </motion.p>
 
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3 }} className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Link to="/register">
-                  <Button size="lg" className="h-14 px-8 rounded-2xl text-[15px] bg-red-600 hover:bg-red-500 text-white font-bold shadow-2xl shadow-red-600/30 w-full sm:w-auto group transition-all duration-300 hover:scale-[1.02]">
-                    {isRtl ? 'ابدأ مجاناً الآن' : 'Start Free Today'}
+                {user ? (
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/dashboard')}
+                    className="h-14 px-8 rounded-2xl text-[15px] bg-red-600 hover:bg-red-500 text-white font-bold shadow-2xl shadow-red-600/30 w-full sm:w-auto group transition-all duration-300 hover:scale-[1.02]"
+                  >
+                    <LayoutDashboard className={`w-5 h-5 ${isRtl ? 'ml-2' : 'mr-2'}`} />
+                    {isRtl ? 'انتقل إلى لوحة التحكم' : 'Go to Dashboard'}
                     <ArrowRight className={`w-5 h-5 ${isRtl ? 'mr-2 rotate-180' : 'ml-2'} group-hover:translate-x-1 transition-transform duration-300`} />
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/register">
+                    <Button size="lg" className="h-14 px-8 rounded-2xl text-[15px] bg-red-600 hover:bg-red-500 text-white font-bold shadow-2xl shadow-red-600/30 w-full sm:w-auto group transition-all duration-300 hover:scale-[1.02]">
+                      {isRtl ? 'ابدأ مجاناً الآن' : 'Start Free Today'}
+                      <ArrowRight className={`w-5 h-5 ${isRtl ? 'mr-2 rotate-180' : 'ml-2'} group-hover:translate-x-1 transition-transform duration-300`} />
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/search">
                   <Button size="lg" variant="outline" className="h-14 px-8 rounded-2xl text-[15px] border border-border/60 font-medium w-full sm:w-auto hover:bg-muted/60 hover:border-red-500/30 transition-all duration-300">
                     <Search className="w-4 h-4 mr-2" />
@@ -430,14 +445,28 @@ export default function LandingPage() {
             </h2>
             <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto font-light leading-relaxed">{isRtl ? 'انضم لـ 48,000+ طالب غيّروا حياتهم بفضل المنح الدراسية. ملفك المجاني جاهز في دقيقتين.' : 'Join 48,000+ students who transformed their lives through scholarships. Your free profile is ready in 2 minutes.'}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Link to="/register">
+              {user ? (
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button size="lg" className="h-16 px-12 rounded-2xl text-lg bg-red-600 hover:bg-red-500 text-white font-black shadow-lg w-full sm:w-auto group transition-all duration-300">
-                    {isRtl ? 'إنشاء حساب مجاني' : 'Create Free Account'}
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/dashboard')}
+                    className="h-16 px-12 rounded-2xl text-lg bg-red-600 hover:bg-red-500 text-white font-black shadow-lg w-full sm:w-auto group transition-all duration-300"
+                  >
+                    <LayoutDashboard className={`w-6 h-6 ${isRtl ? 'ml-3' : 'mr-3'}`} />
+                    {isRtl ? 'انتقل إلى لوحة التحكم' : 'Go to Dashboard'}
                     <ArrowRight className={`w-6 h-6 ${isRtl ? 'mr-3 rotate-180' : 'ml-3'} group-hover:translate-x-1 transition-transform duration-300`} />
                   </Button>
                 </motion.div>
-              </Link>
+              ) : (
+                <Link to="/register">
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button size="lg" className="h-16 px-12 rounded-2xl text-lg bg-red-600 hover:bg-red-500 text-white font-black shadow-lg w-full sm:w-auto group transition-all duration-300">
+                      {isRtl ? 'إنشاء حساب مجاني' : 'Create Free Account'}
+                      <ArrowRight className={`w-6 h-6 ${isRtl ? 'mr-3 rotate-180' : 'ml-3'} group-hover:translate-x-1 transition-transform duration-300`} />
+                    </Button>
+                  </motion.div>
+                </Link>
+              )}
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
               {[isRtl ? 'بدون بطاقة ائتمان' : 'No credit card', isRtl ? 'إعداد في دقيقتين' : 'Setup in 2 minutes', isRtl ? 'إلغاء في أي وقت' : 'Cancel anytime', isRtl ? 'دعم كامل' : 'Full support'].map((item, i) => (

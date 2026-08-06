@@ -287,26 +287,26 @@ export default function Dashboard() {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background pt-20 pb-12 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
-        <div className="mb-10 border-b border-border pb-8">
-          <h1 className="text-4xl font-light tracking-tight mb-2">
+        <div className="mb-6 sm:mb-10 border-b border-border pb-5 sm:pb-8">
+          <h1 className="text-2xl sm:text-4xl font-light tracking-tight mb-1 sm:mb-2 break-words">
             Welcome back, <span className="font-semibold">{user?.name}</span>
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-sm sm:text-lg">
             {applications.saved.length + applications.applying.length + applications.accepted.length} scholarships tracked &nbsp;·&nbsp;
             {applications.accepted.length} accepted
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
 
           {/* Mobile Sidebar Toggle */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden fixed bottom-6 left-6 z-50 w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl shadow-red-500/30 flex items-center justify-center transition-colors"
+            className="lg:hidden fixed bottom-6 right-4 z-50 w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl shadow-red-500/30 flex items-center justify-center transition-colors"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -413,7 +413,7 @@ export default function Dashboard() {
 
                 {/* ── Contribute tab ── */}
                 {activeTab === 'analytics' ? (
-                  <div className="max-w-4xl">
+                  <div className="max-w-4xl w-full">
                     <h2 className="text-2xl font-light mb-6">My Progress Analytics</h2>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -543,16 +543,16 @@ export default function Dashboard() {
                       </Button>
                     </form>
                   </div>
-                ) : activeTab === 'matches' ? (
+) : activeTab === 'matches' ? (
                   /* ── Perfect Matches tab ── */
                   <div>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-light capitalize flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-red-500" /> Perfect Matches
+                    <div className="flex flex-wrap gap-3 items-center justify-between mb-5 sm:mb-6">
+                      <h2 className="text-xl sm:text-2xl font-light capitalize flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" /> Perfect Matches
                       </h2>
                       <a href="/search">
-                        <Button variant="outline" className="border-border rounded-none shadow-none font-medium text-sm">
-                          <Plus className="w-4 h-4 mr-2" /> Find Scholarships
+                        <Button variant="outline" className="border-border rounded-lg shadow-none font-medium text-xs sm:text-sm h-9 px-3">
+                          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> Find Scholarships
                         </Button>
                       </a>
                     </div>
@@ -575,80 +575,69 @@ export default function Dashboard() {
                         </Link>
                       </div>
                     ) : (
-                      <div className="grid gap-4">
+                      <div className="grid gap-3 sm:gap-4">
                         {matchedScholarships.map((s) => {
                           if (!s) return null;
                           return (
-                            <Card key={s._id} className="rounded-none border-border shadow-none bg-card hover:border-foreground/30 transition-colors relative overflow-hidden">
-                              {/* Match percentage badge */}
-                              <div className="absolute top-3 right-3 z-10">
-                                <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg">
-                                  {s.matchPercentage}% Match
-                                </span>
-                              </div>
-                              <CardContent className="p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-
-                                {/* Image */}
-                                {s.image && (
-                                  <img src={s.image} alt="" className="w-16 h-16 object-cover shrink-0 rounded-sm hidden sm:block" />
-                                )}
-
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-base font-semibold truncate">{s.title?.en}</h3>
-                                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1.5">
-                                    <span className="flex items-center gap-1"><GraduationCap className="w-3.5 h-3.5" />{s.university?.en}</span>
-                                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{s.country?.en}</span>
-                                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDeadline(s.deadline)}</span>
-                                  </div>
-                                  <div className="flex gap-2 mt-2">
-                                    <span className="text-[11px] px-2 py-0.5 bg-muted font-medium">{s.fundingType}</span>
-                                    <span className="text-[11px] px-2 py-0.5 bg-muted font-medium">{s.degree}</span>
-                                  </div>
-                                  {/* Match reasons */}
-                                  {s.matchReasons && (
-                                    <div className="flex gap-2 mt-2 flex-wrap">
-                                      {s.matchReasons.countryMatch && (
-                                        <span className="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-600 font-medium flex items-center gap-1">
-                                          <MapPin className="w-3 h-3" /> Country Match
+                            <Card key={s._id} className="rounded-xl border-border shadow-sm bg-card hover:border-foreground/30 transition-colors relative overflow-hidden">
+                              <CardContent className="p-4 sm:p-5">
+                                {/* Top row: image + info + match badge */}
+                                <div className="flex gap-3 sm:gap-5 items-start">
+                                  {s.image && (
+                                    <img src={s.image} alt="" className="w-12 h-12 sm:w-16 sm:h-16 object-cover shrink-0 rounded-lg" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start gap-2 flex-wrap">
+                                      <h3 className="text-sm sm:text-base font-semibold line-clamp-2 sm:truncate leading-snug flex-1">{s.title?.en}</h3>
+                                      <span className="shrink-0 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow">
+                                        {s.matchPercentage}% Match
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1.5">
+                                      <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3 sm:w-3.5 sm:h-3.5" /><span className="truncate max-w-[100px] sm:max-w-none">{s.university?.en}</span></span>
+                                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{s.country?.en}</span>
+                                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{formatDeadline(s.deadline)}</span>
+                                    </div>
+                                    <div className="flex gap-1.5 mt-2 flex-wrap">
+                                      <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-muted font-medium rounded">{s.fundingType}</span>
+                                      <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-muted font-medium rounded">{s.degree}</span>
+                                      {s.matchReasons?.countryMatch && (
+                                        <span className="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-600 font-medium flex items-center gap-1 rounded">
+                                          <MapPin className="w-3 h-3" /> Country
                                         </span>
                                       )}
-                                      {s.matchReasons.majorMatch && (
-                                        <span className="text-[10px] px-2 py-0.5 bg-red-500/10 text-red-600 font-medium flex items-center gap-1">
-                                          <GraduationCap className="w-3 h-3" /> Major Match
+                                      {s.matchReasons?.majorMatch && (
+                                        <span className="text-[10px] px-2 py-0.5 bg-red-500/10 text-red-600 font-medium flex items-center gap-1 rounded">
+                                          <GraduationCap className="w-3 h-3" /> Major
                                         </span>
                                       )}
                                     </div>
-                                  )}
+                                  </div>
                                 </div>
 
-                                {/* Actions */}
-                                <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto items-center">
-
-                                  {/* AI Cover Letter Button */}
+                                {/* Actions Row */}
+                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
                                   <Button
                                     onClick={() => handleGenerateCL(s._id, s.title?.en)}
                                     disabled={clLoading === s._id}
-                                    className="rounded-none bg-gradient-to-r from-red-600 to-red-600 hover:from-red-700 hover:to-red-700 text-white shadow-sm text-xs h-9 px-3 w-full sm:w-auto flex items-center justify-center gap-1.5"
+                                    className="flex-1 sm:flex-none rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-sm text-xs h-8 px-3 flex items-center justify-center gap-1.5"
                                   >
                                     {clLoading === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                     {clLoading === s._id ? 'Generating...' : 'AI Letter'}
                                   </Button>
 
-                                  {/* Open link */}
-                                  <a href={s.link} target="_blank" rel="noreferrer">
-                                    <Button className="rounded-none shadow-none bg-foreground text-background hover:bg-foreground/90 text-xs h-9 px-3 w-full sm:w-auto">
+                                  <a href={s.link} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none">
+                                    <Button className="rounded-lg shadow-none bg-foreground text-background hover:bg-foreground/90 text-xs h-8 px-3 w-full">
                                       Apply <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                                     </Button>
                                   </a>
 
-                                  {/* Save */}
                                   <Button variant="ghost" disabled={removing === s._id}
                                     onClick={() => handleRemove(s._id)}
-                                    className="rounded-none shadow-none text-muted-foreground hover:text-green-500 h-9 px-2.5 w-full sm:w-auto">
+                                    className="rounded-lg shadow-none text-muted-foreground hover:text-green-500 h-8 px-2.5">
                                     {removing === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bookmark className="w-3.5 h-3.5" />}
                                   </Button>
                                 </div>
-
                               </CardContent>
                             </Card>
                           );
@@ -717,17 +706,19 @@ export default function Dashboard() {
 
                   /* ── Kanban tabs ── */
                   <div>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-light capitalize">{tabs.find(t => t.id === activeTab)?.label}</h2>
+                    <div className="flex flex-wrap gap-3 items-center justify-between mb-5 sm:mb-6">
+                      <h2 className="text-xl sm:text-2xl font-light capitalize">{tabs.find(t => t.id === activeTab)?.label}</h2>
                       <div className="flex gap-2">
                         <a href="/search">
-                          <Button variant="outline" className="border-border rounded-none shadow-none font-medium text-sm">
-                            <Plus className="w-4 h-4 mr-2" /> Find Scholarships
+                          <Button variant="outline" className="border-border rounded-none shadow-none font-medium text-xs sm:text-sm h-9 px-3">
+                            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden xs:inline">Find </span>Scholarships
                           </Button>
                         </a>
                         <Link to="/interview-simulator">
-                          <Button variant="outline" className="rounded-none shadow-none border-red-200 text-red-700 font-medium text-sm">
-                            <MessageSquare className="w-4 h-4 mr-2" /> Mock Interview
+                          <Button variant="outline" className="rounded-none shadow-none border-red-200 text-red-700 font-medium text-xs sm:text-sm h-9 px-3">
+                            <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Mock </span>Interview
                           </Button>
                         </Link>
                       </div>
@@ -747,41 +738,41 @@ export default function Dashboard() {
                         <a href="/search"><Button variant="outline" className="mt-6 rounded-none shadow-none border-border font-medium">Browse Scholarships</Button></a>
                       </div>
                     ) : (
-                      <div className="grid gap-4">
+                      <div className="grid gap-3 sm:gap-4">
                         {currentApps.map((app) => {
                           const s = app.scholarship;
                           if (!s) return null;
                           return (
-                            <Card key={app._id} className="rounded-none border-border shadow-none bg-card hover:border-foreground/30 transition-colors">
-                              <CardContent className="p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+                            <Card key={app._id} className="rounded-xl border-border shadow-sm bg-card hover:border-foreground/30 transition-colors overflow-hidden">
+                              <CardContent className="p-4 sm:p-5">
+                                <div className="flex gap-3 sm:gap-5 items-start">
+                                  {/* Image */}
+                                  {s.image && (
+                                    <img src={s.image} alt="" className="w-12 h-12 sm:w-16 sm:h-16 object-cover shrink-0 rounded-lg" />
+                                  )}
 
-                                {/* Image */}
-                                {s.image && (
-                                  <img src={s.image} alt="" className="w-16 h-16 object-cover shrink-0 rounded-sm hidden sm:block" />
-                                )}
-
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="text-base font-semibold truncate">{s.title?.en}</h3>
-                                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1.5">
-                                    <span className="flex items-center gap-1"><GraduationCap className="w-3.5 h-3.5" />{s.university?.en}</span>
-                                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{s.country?.en}</span>
-                                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDeadline(s.deadline)}</span>
-                                  </div>
-                                  <div className="flex gap-2 mt-2">
-                                    <span className="text-[11px] px-2 py-0.5 bg-muted font-medium">{s.fundingType}</span>
-                                    <span className="text-[11px] px-2 py-0.5 bg-muted font-medium">{s.degree}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <h3 className="text-sm sm:text-base font-semibold line-clamp-2 sm:truncate leading-snug">{s.title?.en}</h3>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1.5">
+                                      <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3 sm:w-3.5 sm:h-3.5" /><span className="truncate max-w-[120px] sm:max-w-none">{s.university?.en}</span></span>
+                                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{s.country?.en}</span>
+                                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{formatDeadline(s.deadline)}</span>
+                                    </div>
+                                    <div className="flex gap-1.5 mt-2">
+                                      <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-muted font-medium rounded">{s.fundingType}</span>
+                                      <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 bg-muted font-medium rounded">{s.degree}</span>
+                                    </div>
                                   </div>
                                 </div>
 
-                                {/* Actions */}
-                                <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto items-center">
-
+                                {/* Actions Row */}
+                                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
                                   {/* AI Cover Letter Button (only for Saved & Applying) */}
                                   {(app.status === 'saved' || app.status === 'applying') && (
                                     <Button
                                       onClick={() => handleGenerateCL(s._id, s.title?.en)}
                                       disabled={clLoading === s._id}
-                                      className="rounded-none bg-gradient-to-r from-red-600 to-red-600 hover:from-red-700 hover:to-red-700 text-white shadow-sm text-xs h-9 px-3 w-full sm:w-auto flex items-center justify-center gap-1.5"
+                                      className="flex-1 sm:flex-none rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-sm text-xs h-8 px-3 flex items-center justify-center gap-1.5"
                                     >
                                       {clLoading === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                       {clLoading === s._id ? 'Generating...' : 'AI Letter'}
@@ -790,10 +781,10 @@ export default function Dashboard() {
 
                                   {/* Move status dropdown */}
                                   <div className="relative group">
-                                    <Button variant="outline" disabled={statusUpdating === s._id} className="rounded-none shadow-none border-border text-xs h-9 px-3 w-full sm:w-auto">
-                                      {statusUpdating === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><ChevronDown className="w-3.5 h-3.5 mr-1" />Move to</>}
+                                    <Button variant="outline" disabled={statusUpdating === s._id} className="rounded-lg shadow-none border-border text-xs h-8 px-3">
+                                      {statusUpdating === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><ChevronDown className="w-3.5 h-3.5 mr-1" />Move</>}
                                     </Button>
-                                    <div className="absolute right-0 top-full mt-1 w-36 bg-card border border-border shadow-lg z-10 hidden group-hover:block">
+                                    <div className="absolute left-0 top-full mt-1 w-36 bg-card border border-border shadow-lg z-20 hidden group-hover:block rounded-lg overflow-hidden">
                                       {(['saved', 'applying', 'under_review', 'interview', 'accepted', 'rejected'] as const).filter(st => st !== app.status).map(st => (
                                         <button key={st} onClick={() => handleStatusChange(s._id, st)}
                                           className="w-full px-3 py-2 text-left text-xs hover:bg-muted capitalize">{st}</button>
@@ -802,8 +793,8 @@ export default function Dashboard() {
                                   </div>
 
                                   {/* Open link */}
-                                  <a href={s.link} target="_blank" rel="noreferrer">
-                                    <Button className="rounded-none shadow-none bg-foreground text-background hover:bg-foreground/90 text-xs h-9 px-3 w-full sm:w-auto">
+                                  <a href={s.link} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none">
+                                    <Button className="rounded-lg shadow-none bg-foreground text-background hover:bg-foreground/90 text-xs h-8 px-3 w-full">
                                       Apply <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
                                     </Button>
                                   </a>
@@ -811,7 +802,7 @@ export default function Dashboard() {
                                   {/* Remove */}
                                   <Button variant="ghost" disabled={removing === s._id}
                                     onClick={() => handleRemove(s._id)}
-                                    className="rounded-none shadow-none text-muted-foreground hover:text-red-500 h-9 px-2.5 w-full sm:w-auto">
+                                    className="rounded-lg shadow-none text-muted-foreground hover:text-red-500 h-8 px-2.5">
                                     {removing === s._id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                                   </Button>
                                 </div>
