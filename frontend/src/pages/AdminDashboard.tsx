@@ -933,8 +933,8 @@ export default function AdminDashboard() {
                 {bulkMode === 'csv' && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="file" accept=".csv" onChange={e => {
+                      <label htmlFor="csv-file-upload" className="cursor-pointer">
+                        <input id="csv-file-upload" type="file" accept=".csv" onChange={e => {
                           const file = e.target.files?.[0];
                           if (file) {
                             const reader = new FileReader();
@@ -987,8 +987,8 @@ export default function AdminDashboard() {
                     <div className="flex justify-between items-center mb-2">
                       <Label className="text-xs">Your JSON Array</Label>
                       <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="file" accept=".json" onChange={e => {
+                        <label htmlFor="json-file-upload" className="cursor-pointer">
+                          <input id="json-file-upload" type="file" accept=".json" onChange={e => {
                             const file = e.target.files?.[0];
                             if (file) {
                               const reader = new FileReader();
