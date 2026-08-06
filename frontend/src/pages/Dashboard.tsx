@@ -10,8 +10,12 @@ import { useTranslation } from 'react-i18next';
 import {
   FileText, Bookmark, GraduationCap, MapPin, Calendar, Clock,
   Loader2, Plus, ArrowRight, Settings, CheckCircle, ExternalLink,
-  Trash2, ChevronDown, Sparkles, X, XCircle, Copy, MessageSquare, Menu, Pencil
+  Trash2, ChevronDown, Sparkles, X, XCircle, Copy, MessageSquare, Menu, Pencil, BarChart2
 } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
 import axios from 'axios';
 import AdminDashboard from './AdminDashboard';
 import { useToast } from '../components/ui/Toast';
@@ -45,7 +49,7 @@ interface AppEntry {
 export default function Dashboard() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches' | 'mysubmissions'>('saved');
+  const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches' | 'mysubmissions' | 'analytics'>('saved');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [applications, setApplications] = useState<{ saved: AppEntry[]; applying: AppEntry[]; underReview: AppEntry[]; interview: AppEntry[]; accepted: AppEntry[]; rejected: AppEntry[] }>({
     saved: [], applying: [], underReview: [], interview: [], accepted: [], rejected: []
@@ -227,6 +231,7 @@ export default function Dashboard() {
     { id: 'rejected', label: 'Rejected',     count: applications.rejected.length, icon: XCircle },
     { id: 'matches',  label: 'Perfect Matches', count: matchedScholarships.length, icon: Sparkles },
     { id: 'mysubmissions', label: 'My Submissions', count: myScholarships.length, icon: FileText },
+    { id: 'analytics', label: 'My Analytics', count: 0, icon: BarChart2 },
   ];
 
   const currentApps = applications[activeTab as keyof typeof applications] ?? [];
@@ -407,7 +412,88 @@ export default function Dashboard() {
                 exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.18 }}>
 
                 {/* ── Contribute tab ── */}
-                {activeTab === 'contribute' ? (
+                {activeTab === 'analytics' ? (
+                  <div className="max-w-4xl">
+                    <h2 className="text-2xl font-light mb-6">My Progress Analytics</h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm text-center">
+                        <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Bookmark className="w-6 h-6 text-blue-500" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">Total Saved</p>
+                        <p className="text-2xl font-bold mt-1">{applications.saved.length}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm text-center">
+                        <div className="w-12 h-12 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Clock className="w-6 h-6 text-yellow-500" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">In Progress</p>
+                        <p className="text-2xl font-bold mt-1">{applications.applying.length + applications.underReview.length}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm text-center">
+                        <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <GraduationCap className="w-6 h-6 text-green-500" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">Accepted</p>
+                        <p className="text-2xl font-bold mt-1">{applications.accepted.length}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+                        <h3 className="font-semibold mb-6">Application Funnel</h3>
+                        <div className="h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={[
+                              { name: 'Saved', count: applications.saved.length },
+                              { name: 'Applied', count: applications.applying.length + applications.underReview.length },
+                              { name: 'Interview', count: applications.interview.length },
+                              { name: 'Accepted', count: applications.accepted.length }
+                            ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                              <XAxis dataKey="name" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <Bar dataKey="count" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+                        <h3 className="font-semibold mb-6">Application Status</h3>
+                        <div className="h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: 'Saved', count: applications.saved.length },
+                                  { name: 'Applying', count: applications.applying.length },
+                                  { name: 'Review', count: applications.underReview.length },
+                                  { name: 'Accepted', count: applications.accepted.length }
+                                ].filter(d => d.count > 0)}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={90}
+                                paddingAngle={5}
+                                dataKey="count"
+                              >
+                                {applications.saved.length > 0 && <Cell fill="#3b82f6" />}
+                                {applications.applying.length > 0 && <Cell fill="#f59e0b" />}
+                                {applications.underReview.length > 0 && <Cell fill="#8b5cf6" />}
+                                {applications.accepted.length > 0 && <Cell fill="#10b981" />}
+                              </Pie>
+                              <RechartsTooltip contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : activeTab === 'contribute' ? (
                   <div className="max-w-3xl">
                     <h2 className="text-2xl font-light mb-1">Contribute a Scholarship</h2>
                     <p className="text-muted-foreground mb-8 text-sm">

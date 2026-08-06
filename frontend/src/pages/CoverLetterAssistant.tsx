@@ -144,6 +144,34 @@ ${letter}`
           </div>
         </motion.div>
 
+        {/* Analytics Bar */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="border-border shadow-sm bg-card rounded-xl">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl font-bold text-foreground">12</span>
+              <span className="text-xs text-muted-foreground mt-1">{isAr ? 'خطابات قُيمت' : 'Letters Reviewed'}</span>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm bg-card rounded-xl">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl font-bold text-green-500">+3</span>
+              <span className="text-xs text-muted-foreground mt-1">{isAr ? 'نقاط القوة المكتشفة (متوسط)' : 'Avg Strengths Found'}</span>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm bg-card rounded-xl">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl font-bold text-blue-500">85%</span>
+              <span className="text-xs text-muted-foreground mt-1">{isAr ? 'معدل التحسن' : 'Improvement Rate'}</span>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm bg-card rounded-xl">
+            <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl font-bold text-orange-500">5k+</span>
+              <span className="text-xs text-muted-foreground mt-1">{isAr ? 'كلمات تم مراجعتها' : 'Words Analyzed'}</span>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Tab Switcher */}
         <div className="flex gap-2 mb-8">
           <button

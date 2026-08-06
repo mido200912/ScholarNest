@@ -13,6 +13,10 @@ import {
   Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil,
   FileText, FileSpreadsheet, Table, Copy, Minus, AlertTriangle
 } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Bar, PieChart, Pie, Cell, Legend
+} from 'recharts';
 
 import { API_BASE as API } from '../config/api';
 
@@ -55,8 +59,11 @@ export default function AdminDashboard() {
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
-      const { data } = await axios.get(`${API}/admin/stats`, { headers });
-      setAnalytics(data.data);
+      const [{ data: statsData }, { data: dailyData }] = await Promise.all([
+        axios.get(`${API}/admin/stats`, { headers }),
+        axios.get(`${API}/admin/stats/daily`, { headers })
+      ]);
+      setAnalytics({ ...statsData.data, daily: dailyData.data });
     } catch {
       toastError('Failed', 'Could not load analytics.');
     } finally {
@@ -575,70 +582,87 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Charts Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                      {/* Top Countries */}
-                      <div className="bg-card border border-border rounded-lg p-5">
-                        <h3 className="font-semibold mb-4">Top Countries</h3>
-                        {analytics.topCountries?.map((c: any) => (
-                          <div key={c._id} className="flex items-center justify-between mb-2">
-                            <span className="text-sm">{c._id || 'Unknown'}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-red-500 rounded-full" style={{ width: `${(c.count / (analytics.topCountries[0]?.count || 1)) * 100}%` }} />
-                              </div>
-                              <span className="text-xs text-muted-foreground w-6 text-right">{c.count}</span>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                      {/* Daily Signups Area Chart */}
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
+                        <h3 className="font-semibold mb-4">User Growth (Last 30 Days)</h3>
+                        <div className="h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={analytics.daily?.dailyUsers || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                              <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <RechartsTooltip contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <Area type="monotone" dataKey="count" stroke="#ef4444" fillOpacity={1} fill="url(#colorUsers)" />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
 
-                      {/* Top Universities */}
-                      <div className="bg-card border border-border rounded-lg p-5">
-                        <h3 className="font-semibold mb-4">Top Universities</h3>
-                        {analytics.topUniversities?.map((u: any) => (
-                          <div key={u._id} className="flex items-center justify-between mb-2">
-                            <span className="text-sm truncate mr-2">{u._id || 'Unknown'}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(u.count / (analytics.topUniversities[0]?.count || 1)) * 100}%` }} />
-                              </div>
-                              <span className="text-xs text-muted-foreground w-6 text-right">{u.count}</span>
-                            </div>
-                          </div>
-                        ))}
+                      {/* Top Countries Pie Chart */}
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
+                        <h3 className="font-semibold mb-4">Top Countries</h3>
+                        <div className="h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={analytics.topCountries || []}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={90}
+                                paddingAngle={5}
+                                dataKey="count"
+                                nameKey="_id"
+                              >
+                                {(analytics.topCountries || []).map((_: any, index: number) => (
+                                  <Cell key={`cell-${index}`} fill={['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]} />
+                                ))}
+                              </Pie>
+                              <RechartsTooltip contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
                     </div>
 
                     {/* Distribution */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-card border border-border rounded-lg p-5">
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
                         <h3 className="font-semibold mb-4">Degrees Distribution</h3>
-                        {analytics.degreesDistribution?.map((d: any) => (
-                          <div key={d._id} className="flex items-center justify-between mb-2">
-                            <span className="text-sm">{d._id}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-green-500 rounded-full" style={{ width: `${(d.count / (analytics.degreesDistribution[0]?.count || 1)) * 100}%` }} />
-                              </div>
-                              <span className="text-xs text-muted-foreground w-6 text-right">{d.count}</span>
-                            </div>
-                          </div>
-                        ))}
+                        <div className="h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={analytics.degreesDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                              <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
 
-                      <div className="bg-card border border-border rounded-lg p-5">
+                      <div className="bg-card border border-border rounded-lg p-5 shadow-sm">
                         <h3 className="font-semibold mb-4">Funding Types</h3>
-                        {analytics.fundingDistribution?.map((f: any) => (
-                          <div key={f._id} className="flex items-center justify-between mb-2">
-                            <span className="text-sm">{f._id}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(f.count / (analytics.fundingDistribution[0]?.count || 1)) * 100}%` }} />
-                              </div>
-                              <span className="text-xs text-muted-foreground w-6 text-right">{f.count}</span>
-                            </div>
-                          </div>
-                        ))}
+                        <div className="h-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={analytics.fundingDistribution || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                              <XAxis dataKey="_id" tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <YAxis tick={{fontSize: 12, fill: 'hsl(var(--muted-foreground))'}} tickLine={false} axisLine={false} />
+                              <RechartsTooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px'}} />
+                              <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
                     </div>
 

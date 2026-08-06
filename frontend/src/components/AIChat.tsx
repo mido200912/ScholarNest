@@ -111,6 +111,7 @@ export default function AIChat() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
+            </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 scroll-smooth" dir="auto">

@@ -161,6 +161,29 @@ export default function InterviewSimulator() {
 
       <div className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 flex flex-col">
         {!selectedScholarship ? (
+          <>
+          /* ── Analytics Bar ── */
+          <div className="w-full max-w-4xl mx-auto mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-card border border-border shadow-sm rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-bold text-foreground">24</span>
+                <span className="text-xs text-muted-foreground mt-1">{isAr ? 'مقابلة مكتملة' : 'Completed Interviews'}</span>
+              </div>
+              <div className="bg-card border border-border shadow-sm rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-bold text-green-500">8.5/10</span>
+                <span className="text-xs text-muted-foreground mt-1">{isAr ? 'متوسط التقييم' : 'Average Score'}</span>
+              </div>
+              <div className="bg-card border border-border shadow-sm rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-bold text-blue-500">1.2h</span>
+                <span className="text-xs text-muted-foreground mt-1">{isAr ? 'وقت التدريب' : 'Practice Time'}</span>
+              </div>
+              <div className="bg-card border border-border shadow-sm rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-bold text-orange-500">3</span>
+                <span className="text-xs text-muted-foreground mt-1">{isAr ? 'مقابلات متتالية (Streak)' : 'Current Streak'}</span>
+              </div>
+            </div>
+          </div>
+
           /* ── Scholarship Picker ── */
           <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
             <div className="text-center mb-8">
@@ -215,6 +238,7 @@ export default function InterviewSimulator() {
               </div>
             )}
           </div>
+          </>
         ) : (
           /* ── Chat Interface ── */
           <div className="flex-1 flex flex-col border border-border rounded-2xl bg-card shadow-sm overflow-hidden min-h-[500px]">
