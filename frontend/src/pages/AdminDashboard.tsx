@@ -11,7 +11,7 @@ import {
   Loader2, Plus, CheckCircle, Clock, XCircle,
   ShieldCheck, Upload, FileJson, X, Tag, Sparkles,
   Trash2, Search, RefreshCw, Menu, Users, UserCheck, Pencil,
-  FileText, FileSpreadsheet, Table, Copy, Minus
+  FileText, FileSpreadsheet, Table, Copy, Minus, AlertTriangle
 } from 'lucide-react';
 
 import { API_BASE as API } from '../config/api';
@@ -368,8 +368,47 @@ export default function AdminDashboard() {
     })).filter(r => r.title.en || r.title.ar);
   };
 
+  const validateScholarships = (scholarships: any[]): { valid: any[]; errors: string[] } => {
+    const requiredFields = [
+      { key: 'title.en', label: 'Title (EN)', check: (s: any) => s.title?.en },
+      { key: 'title.ar', label: 'Title (AR)', check: (s: any) => s.title?.ar },
+      { key: 'description.en', label: 'Description (EN)', check: (s: any) => s.description?.en },
+      { key: 'description.ar', label: 'Description (AR)', check: (s: any) => s.description?.ar },
+      { key: 'university.en', label: 'University (EN)', check: (s: any) => s.university?.en },
+      { key: 'university.ar', label: 'University (AR)', check: (s: any) => s.university?.ar },
+      { key: 'country.en', label: 'Country (EN)', check: (s: any) => s.country?.en },
+      { key: 'country.ar', label: 'Country (AR)', check: (s: any) => s.country?.ar },
+      { key: 'degree', label: 'Degree', check: (s: any) => s.degree },
+      { key: 'fundingType', label: 'Funding Type', check: (s: any) => s.fundingType },
+      { key: 'deadline', label: 'Deadline', check: (s: any) => s.deadline },
+      { key: 'link', label: 'Application Link', check: (s: any) => s.link },
+    ];
+
+    const valid: any[] = [];
+    const errors: string[] = [];
+
+    scholarships.forEach((s, idx) => {
+      const missing = requiredFields.filter(f => !f.check(s)).map(f => f.label);
+      if (missing.length > 0) {
+        errors.push(`Row ${idx + 1} (${s.title?.en || s.title?.ar || 'Untitled'}): Missing required fields — ${missing.join(', ')}`);
+      } else {
+        valid.push(s);
+      }
+    });
+
+    return { valid, errors };
+  };
+
   const handleBulkImport = async (scholarships: any[]) => {
-    if (!scholarships.length) {
+    const { valid, errors } = validateScholarships(scholarships);
+    
+    if (errors.length > 0) {
+      setJsonError('Validation Failed:\n\n' + errors.join('\n'));
+      toastError('Validation Failed', `${errors.length} scholarship(s) have missing required fields`);
+      return;
+    }
+
+    if (!valid.length) {
       toastError('Empty Data', 'No valid scholarships to import.');
       return;
     }
@@ -922,6 +961,19 @@ export default function AdminDashboard() {
                       </div>
                     </div>
 
+                    {/* Validation Summary */}
+                    {(() => {
+                      const { errors } = validateScholarships(rowsToJson());
+                      return errors.length > 0 ? (
+                        <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+                          <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">⚠ Validation Issues ({errors.length} row(s) incomplete):</p>
+                          <ul className="text-xs text-red-600 dark:text-red-400 space-y-0.5 max-h-40 overflow-y-auto">
+                            {errors.map((e, i) => <li key={i} className="font-mono">{e}</li>)}
+                          </ul>
+                        </div>
+                      ) : null;
+                    })()}
+
                     <div className="overflow-x-auto rounded-lg border border-border">
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50">
@@ -940,9 +992,22 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {bulkRows.map((row, idx) => (
-                            <tr key={idx} className="border-t border-border hover:bg-muted/50">
-                              <td className="p-2 text-muted-foreground">{idx + 1}</td>
+                          {bulkRows.map((row, idx) => {
+                            const scholarship = rowsToJson()[idx];
+                            const { errors: rowErrors } = scholarship ? validateScholarships([scholarship]) : { errors: [] };
+                            const hasErrors = rowErrors.length > 0;
+                            return (
+                              <tr key={idx} className={`border-t border-border hover:bg-muted/50 ${hasErrors ? 'bg-red-50/50 dark:bg-red-950/10' : ''}`}>
+                                <td className="p-2 text-muted-foreground">
+                                  {hasErrors ? (
+                                    <span className="flex items-center gap-1 text-red-500" title={rowErrors.join(', ')}>
+                                      <AlertTriangle className="w-3.5 h-3.5" />
+                                      {idx + 1}
+                                    </span>
+                                  ) : (
+                                    idx + 1
+                                  )}
+                                </td>
                               <td className="p-2"><Input value={row.titleEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleEn: e.target.value }; setBulkRows(nr); }} placeholder="Title EN" className="h-8 text-xs" /></td>
                               <td className="p-2"><Input value={row.titleAr} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], titleAr: e.target.value }; setBulkRows(nr); }} placeholder="Title AR" className="h-8 text-xs text-right" dir="rtl" /></td>
                               <td className="p-2"><Input value={row.countryEn} onChange={e => { const nr = [...bulkRows]; nr[idx] = { ...nr[idx], countryEn: e.target.value }; setBulkRows(nr); }} placeholder="Country EN" className="h-8 text-xs" /></td>
