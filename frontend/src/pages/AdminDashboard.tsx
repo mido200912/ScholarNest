@@ -258,6 +258,36 @@ export default function AdminDashboard() {
   ]);
   const [csvText, setCsvText] = useState('');
 
+  const parseJson = (jsonText: string): any[] => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      const arr = Array.isArray(parsed) ? parsed : [parsed];
+      
+      // Handle both nested format (backend format) and flat format (CSV-like)
+      return arr.map(item => {
+        // If already in nested format, return as-is
+        if (item.title?.en || item.title?.ar) {
+          return item;
+        }
+        // Convert flat format to nested format
+        return {
+          title: { en: item.title_en || item.titleEn || '', ar: item.title_ar || item.titleAr || '' },
+          description: { en: item.description_en || item.descEn || '', ar: item.description_ar || item.descAr || '' },
+          university: { en: item.university_en || item.uniEn || '', ar: item.university_ar || item.uniAr || '' },
+          country: { en: item.country_en || item.countryEn || '', ar: item.country_ar || item.countryAr || '' },
+          degree: item.degree || 'Master',
+          fundingType: item.fundingType || 'Fully Funded',
+          deadline: item.deadline ? (isNaN(Date.parse(item.deadline)) ? '' : new Date(item.deadline).toISOString()) : '',
+          link: item.link || '',
+          image: item.image || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop',
+          keywords: item.keywords ? (typeof item.keywords === 'string' ? item.keywords.split(',').map((k: string) => k.trim()).filter(Boolean) : item.keywords) : [],
+        };
+      }).filter(r => r.title.en || r.title.ar);
+    } catch {
+      return [];
+    }
+  };
+
   const validateJsonWithAI = async (rawJson: string, parseError: string) => {
     try {
       const { data } = await axios.post(`${API}/ai/chat`, {
@@ -277,9 +307,35 @@ export default function AdminDashboard() {
   const parseCsv = (text: string): any[] => {
     const lines = text.trim().split('\n').filter(l => l.trim());
     if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    
+    // Proper CSV parsing that handles quoted fields with commas
+    const parseLine = (line: string): string[] => {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim());
+      return result.map(v => v.replace(/^"|"$/g, ''));
+    };
+
+    const headers = parseLine(lines[0]);
     return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const values = parseLine(line);
       const obj: any = {};
       headers.forEach((h, i) => { obj[h] = values[i] || ''; });
       return obj;
@@ -287,12 +343,12 @@ export default function AdminDashboard() {
   };
 
   const csvHeaders = [
-    'titleEn', 'titleAr', 'descEn', 'descAr', 'countryEn', 'countryAr',
-    'uniEn', 'uniAr', 'degree', 'fundingType', 'deadline', 'link', 'image', 'keywords'
+    'title_en', 'title_ar', 'description_en', 'description_ar', 'university_en', 'university_ar',
+    'country_en', 'country_ar', 'degree', 'fundingType', 'deadline', 'applicationOpens', 'link', 'image', 'keywords', 'verificationNote'
   ];
 
   const generateCsvTemplate = () => {
-    return csvHeaders.join(',') + '\n' + 'Scholarship Title,اسم المنحة,Description,الوصف,Germany,ألمانيا,University,الجامعة,Master,Fully Funded,2025-12-31,https://apply.com,https://image.com,"Engineering, Germany, Masters"';
+    return csvHeaders.join(',') + '\n' + 'Chevening Scholarships,منح تشيفنينغ الدراسية,"Fully funded master\'s degree in the UK","منحة ماجستير ممولة بالكامل في المملكة المتحدة",Various UK Universities,جامعات بريطانية متعددة,United Kingdom,المملكة المتحدة,Master,Fully Funded,2026-10-06,2026-08-04,https://www.chevening.org/apply/,https://example.com/image.jpg,"UK, Master, Leadership, Chevening",Verified live Aug 2026';
   };
 
   const rowsToJson = () => {
@@ -953,10 +1009,20 @@ export default function AdminDashboard() {
                         const parsed = parseCsv(csvText);
                         if (parsed.length) {
                           setBulkRows(parsed.map(p => ({
-                            titleEn: p.titleEn || '', titleAr: p.titleAr || '', descEn: p.descEn || '', descAr: p.descAr || '',
-                            countryEn: p.countryEn || '', countryAr: p.countryAr || '', uniEn: p.uniEn || '', uniAr: p.uniAr || '',
-                            degree: p.degree || 'Master', fundingType: p.fundingType || 'Fully Funded',
-                            deadline: p.deadline || '', link: p.link || '', image: p.image || '', keywords: p.keywords || '',
+                            titleEn: p.title_en || p.titleEn || '',
+                            titleAr: p.title_ar || p.titleAr || '',
+                            descEn: p.description_en || p.descEn || '',
+                            descAr: p.description_ar || p.descAr || '',
+                            countryEn: p.country_en || p.countryEn || '',
+                            countryAr: p.country_ar || p.countryAr || '',
+                            uniEn: p.university_en || p.uniEn || '',
+                            uniAr: p.university_ar || p.uniAr || '',
+                            degree: p.degree || 'Master',
+                            fundingType: p.fundingType || 'Fully Funded',
+                            deadline: p.deadline || '',
+                            link: p.link || '',
+                            image: p.image || '',
+                            keywords: p.keywords || '',
                           })));
                           setBulkMode('table');
                           toastSuccess('CSV Parsed', `${parsed.length} rows loaded into table editor`);
@@ -1026,8 +1092,11 @@ export default function AdminDashboard() {
                     <Button
                       onClick={() => {
                         try {
-                          const parsed = JSON.parse(bulkJson);
-                          handleBulkImport(Array.isArray(parsed) ? parsed : [parsed]);
+                          const parsed = parseJson(bulkJson);
+                          if (parsed.length === 0) {
+                            throw new Error('No valid scholarships found in JSON');
+                          }
+                          handleBulkImport(parsed);
                         } catch (e: any) {
                           setJsonError('Analyzing...');
                           validateJsonWithAI(bulkJson, e.message).then(setJsonError);
