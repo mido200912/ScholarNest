@@ -66,8 +66,8 @@ export default function Navbar() {
       className="fixed w-full z-40 top-0 bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60 border-b border-border transition-colors duration-300"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold tracking-tight text-foreground transition-transform duration-300">
-          ScholarNest
+        <Link to="/" className="flex items-center gap-2 transition-transform duration-300">
+          <img src="/Scholarnest.png" alt="ScholarNest Logo" className="h-8 w-auto" />
         </Link>
 
         {/* Desktop Links */}

@@ -47,7 +47,7 @@ export default function Login() {
         <div className="flex justify-between items-center mb-16">
           <Link to="/" className="text-xl font-bold tracking-tight text-foreground hover:opacity-80 transition-opacity flex items-center gap-2">
             <ArrowLeft className={`w-5 h-5 ${isRtl ? 'rotate-180' : ''}`} />
-            ScholarNest
+            <img src="/Scholarnest.png" alt="ScholarNest Logo" className="h-8 w-auto" />
           </Link>
           <div className="flex gap-2">
             <ThemeToggle />
