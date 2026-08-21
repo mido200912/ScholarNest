@@ -25,9 +25,9 @@ function getLevel(points: number): string {
   return 'Bronze';
 }
 
-export const awardPoints = async (userId: string, action: keyof typeof POINTS) => {
+export const awardPoints = async (userId: string, action: keyof typeof POINTS | { points: number }) => {
   try {
-    const points = POINTS[action];
+    const points = typeof action === 'object' ? action.points : POINTS[action];
     if (!points) return;
 
     const user = await User.findById(userId);

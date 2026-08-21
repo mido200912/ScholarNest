@@ -153,3 +153,12 @@
 .animate-fade-in {
   animation: slowFadeIn 0.8s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
+
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 4s ease infinite;
+}

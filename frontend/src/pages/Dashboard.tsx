@@ -19,6 +19,7 @@ import {
 import axios from 'axios';
 import AdminDashboard from './AdminDashboard';
 import { useToast } from '../components/ui/Toast';
+import WeeklyQuests from '../components/quests/WeeklyQuests';
 
 import { API_BASE as API } from '../config/api';
 
@@ -48,8 +49,8 @@ interface AppEntry {
 
 export default function Dashboard() {
   const { user } = useAuthStore();
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches' | 'mysubmissions' | 'analytics'>('saved');
+  const { t, i18n } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'saved' | 'applying' | 'accepted' | 'contribute' | 'matches' | 'mysubmissions' | 'analytics' | 'quests'>('saved');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [applications, setApplications] = useState<{ saved: AppEntry[]; applying: AppEntry[]; underReview: AppEntry[]; interview: AppEntry[]; accepted: AppEntry[]; rejected: AppEntry[] }>({
     saved: [], applying: [], underReview: [], interview: [], accepted: [], rejected: []
@@ -230,6 +231,7 @@ export default function Dashboard() {
     { id: 'accepted', label: 'Accepted',     count: applications.accepted.length, icon: GraduationCap },
     { id: 'rejected', label: 'Rejected',     count: applications.rejected.length, icon: XCircle },
     { id: 'matches',  label: 'Perfect Matches', count: matchedScholarships.length, icon: Sparkles },
+    { id: 'quests',   label: 'Weekly Quests', count: 0, icon: Sparkles },
     { id: 'mysubmissions', label: 'My Submissions', count: myScholarships.length, icon: FileText },
     { id: 'analytics', label: 'My Analytics', count: 0, icon: BarChart2 },
   ];
@@ -645,6 +647,9 @@ export default function Dashboard() {
                       </div>
                     )}
                   </div>
+                ) : activeTab === 'quests' ? (
+                  /* ── Weekly Quests tab ── */
+                  <WeeklyQuests lang={i18n.language} />
                 ) : activeTab === 'mysubmissions' ? (
                   /* ── My Submissions tab ── */
                   <div>

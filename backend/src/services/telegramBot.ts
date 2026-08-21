@@ -4,9 +4,141 @@ import { answerCallbackQuery, editMessageText, sendTelegramMessage } from './tel
 import { sendEmail } from './emailService';
 
 const getApiUrl = () => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
+const SITE_URL = process.env.SITE_URL || 'http://localhost:5173';
 
 let offset = 0;
 let polling = false;
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+const formatDaysLeft = (deadline: Date) => {
+  const diff = Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return 'انتهت';
+  if (diff === 0) return 'اليوم!';
+  return `${diff} يوماً متبقياً`;
+};
+
+const searchScholarships = async (query: string) => {
+  const searchRegex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  return Scholarship.find({
+    status: 'approved',
+    deadline: { $gt: new Date() },
+    $or: [
+      { 'title.en': searchRegex },
+      { 'title.ar': searchRegex },
+      { 'university.en': searchRegex },
+      { 'university.ar': searchRegex },
+      { 'country.en': searchRegex },
+      { 'country.ar': searchRegex },
+      { keywords: searchRegex },
+    ],
+  })
+    .select('title university country degree fundingType deadline link')
+    .sort({ deadline: 1 })
+    .limit(5);
+};
+
+const formatScholarshipMsg = (s: any, ar: boolean) => {
+  const title = ar ? s.title.ar || s.title.en : s.title.en || s.title.ar;
+  const uni = ar ? s.university.ar || s.university.en : s.university.en || s.university.ar;
+  const country = ar ? s.country.ar || s.country.en : s.country.en || s.country.ar;
+  return [
+    `🎓 <b>${escapeHtml(title)}</b>`,
+    `🏛 ${escapeHtml(uni)} — ${escapeHtml(country)}`,
+    `💰 ${s.fundingType} • ${s.degree} • ⏳ ${formatDaysLeft(s.deadline)}`,
+    `🔗 <a href="${s.link}">التقديم</a> | <a href="${SITE_URL}/scholarships/${s._id}">التفاصيل</a>`,
+  ].join('\n');
+};
+
+const handleTextMessage = async (chatIdRaw: number | string, text: string) => {
+  const chatId = String(chatIdRaw);
+  const input = text.trim();
+  const isAr = /[\u0600-\u06FF]/.test(input);
+
+  if (input === '/start' || input === '/help') {
+    await sendTelegramMessage(
+      chatId,
+      [
+        '🎓 <b>أهلاً بك في بوت ScholarNest!</b>',
+        '',
+        'يمكنك البحث عن المنح مباشرة من هنا:',
+        '• اكتب أي كلمة: بلد، تخصص، أو اسم منحة',
+        '  (مثال: <code>ألمانيا</code> أو <code>هندسة</code>)',
+        '',
+        '⚡ <b>الأوامر:</b>',
+        '/latest — أحدث 5 منح تنتهي قريباً',
+        '/top — المنح الممولة بالكامل',
+        '/help — هذه الرسالة',
+      ].join('\n')
+    );
+    return;
+  }
+
+  if (input === '/latest') {
+    const docs = await Scholarship.find({ status: 'approved', deadline: { $gt: new Date() } })
+      .select('title university country degree fundingType deadline link')
+      .sort({ deadline: 1 })
+      .limit(5);
+
+    if (!docs.length) {
+      await sendTelegramMessage(chatId, 'لا توجد منح مفتوحة حالياً 📭');
+      return;
+    }
+
+    for (const s of docs) {
+      await sendTelegramMessage(chatId, formatScholarshipMsg(s, true));
+    }
+    return;
+  }
+
+  if (input === '/top') {
+    const top = await Scholarship.find({
+      status: 'approved',
+      deadline: { $gt: new Date() },
+      fundingType: 'Fully Funded',
+    })
+      .select('title university country degree fundingType deadline link')
+      .sort({ deadline: 1 })
+      .limit(5);
+
+    if (!top.length) {
+      await sendTelegramMessage(chatId, 'لا توجد منح ممولة بالكامل حالياً 📭');
+      return;
+    }
+
+    for (const s of top) {
+      await sendTelegramMessage(chatId, formatScholarshipMsg(s, true));
+    }
+    return;
+  }
+
+  const docs = await searchScholarships(input);
+
+  if (!docs.length) {
+    await sendTelegramMessage(
+      chatId,
+      [
+        `🔍 لا توجد نتائج لـ "${escapeHtml(input)}"`,
+        '',
+        `جرب كلمات أخرى، أو تصفح كل المنح: ${SITE_URL}/search`,
+      ].join('\n')
+    );
+    return;
+  }
+
+  await sendTelegramMessage(
+    chatId,
+    `🔍 وجدت <b>${docs.length === 5 ? '5+' : docs.length}</b> نتيجة — أعرض الأهم أولاً:`
+  );
+  for (const s of docs) {
+    await sendTelegramMessage(chatId, formatScholarshipMsg(s, isAr));
+  }
+};
 
 const handleCallbackQuery = async (callbackQuery: any) => {
   const { id, message, data } = callbackQuery;
@@ -89,6 +221,16 @@ const pollUpdates = async () => {
 
       if (update.callback_query) {
         await handleCallbackQuery(update.callback_query);
+      } else if (update.message?.text) {
+        const chatId = update.message.chat?.id;
+        const text = update.message.text;
+        if (chatId && text) {
+          try {
+            await handleTextMessage(chatId, text);
+          } catch (err: any) {
+            console.error('Text message handler error:', err.message);
+          }
+        }
       }
     }
   } catch (error: any) {
