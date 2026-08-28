@@ -2,6 +2,7 @@ import axios from 'axios';
 import google from 'googlethis';
 import Groq from 'groq-sdk';
 import { Scholarship } from '../models/Scholarship';
+import { BotSettings } from '../models/BotSettings';
 import { sendTelegramMessage } from './telegramService';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -9,7 +10,7 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const getHunterChatId = (): string => process.env.HUNTER_CHAT_ID || '';
+const getHunterChatId = (settingsChatId?: string): string => settingsChatId || process.env.HUNTER_CHAT_ID || '';
 const SITE_URL = process.env.SITE_URL || 'http://localhost:5173';
 
 // In-memory store for pending hunt scholarships (keyed by index)
@@ -81,11 +82,11 @@ async function callAI(messages: any[], maxTokens = 2000): Promise<string> {
 }
 
 // ── Step 1: Search the internet for new scholarships ───────────────────────────
-async function searchInternetForScholarships(): Promise<any[]> {
+async function searchInternetForScholarships(queries: string[], maxResults: number): Promise<any[]> {
   const allResults: any[] = [];
-  const queries = SEARCH_QUERIES.sort(() => Math.random() - 0.5).slice(0, 3);
+  const selectedQueries = queries.sort(() => Math.random() - 0.5).slice(0, queries.length);
 
-  for (const query of queries) {
+  for (const query of selectedQueries) {
     try {
       const results = await google.search(query, {
         page: 0,
@@ -106,7 +107,7 @@ async function searchInternetForScholarships(): Promise<any[]> {
             !url.includes('twitter.com')
           );
         })
-        .slice(0, 5)
+        .slice(0, maxResults)
         .map((r: any) => ({
           title: r.title,
           description: r.description,
@@ -253,8 +254,8 @@ Return ONLY valid JSON. No markdown blocks, no explanation.`;
 }
 
 // ── Step 4: Send discovered scholarships to Telegram ───────────────────────────
-export async function sendDiscoveredScholarshipsToTelegram(scholarships: any[]): Promise<void> {
-  const chatId = getHunterChatId();
+export async function sendDiscoveredScholarshipsToTelegram(scholarships: any[], chatIdOverride?: string): Promise<void> {
+  const chatId = chatIdOverride || getHunterChatId();
   if (!chatId) {
     console.log('[Hunter] No HUNTER_CHAT_ID configured, skipping Telegram notification');
     return;
@@ -340,13 +341,28 @@ export async function runScholarshipHunt(): Promise<void> {
   console.log('[Hunter] Starting daily scholarship hunt...');
 
   try {
+    // Load settings from DB
+    const settings = await BotSettings.getSettings();
+
+    if (!settings.huntEnabled) {
+      console.log('[Hunter] Scholarship hunting is disabled in settings');
+      return;
+    }
+
+    const chatId = getHunterChatId(settings.hunterChatId);
+    const queries = settings.searchQueries?.length ? settings.searchQueries : SEARCH_QUERIES;
+    const queriesPerDay = settings.queriesPerDay || 3;
+    const maxResults = settings.maxResultsPerQuery || 5;
+
+    // Limit queries to the configured amount
+    const selectedQueries = [...queries].sort(() => Math.random() - 0.5).slice(0, queriesPerDay);
+
     // Step 1: Search internet
-    console.log('[Hunter] Searching internet...');
-    const rawResults = await searchInternetForScholarships();
+    console.log(`[Hunter] Searching internet with ${queriesPerDay} queries...`);
+    const rawResults = await searchInternetForScholarships(selectedQueries, maxResults);
     console.log(`[Hunter] Found ${rawResults.length} raw results`);
 
     if (rawResults.length === 0) {
-      const chatId = getHunterChatId();
       if (chatId) {
         await sendTelegramMessage(chatId, '🔍 <b>نتيجة البحث اليومية</b>\n\nلم يتم العثور على نتائج جديدة اليوم.');
       }
@@ -359,12 +375,13 @@ export async function runScholarshipHunt(): Promise<void> {
     console.log(`[Hunter] ${evaluated.length} scholarships passed evaluation`);
 
     // Step 3: Send to Telegram
-    await sendDiscoveredScholarshipsToTelegram(evaluated);
+    await sendDiscoveredScholarshipsToTelegram(evaluated, chatId);
 
     console.log('[Hunter] Daily hunt completed successfully');
   } catch (error: any) {
     console.error('[Hunter] Error in daily hunt:', error.message);
-    const chatId = getHunterChatId();
+    const settings = await BotSettings.getSettings().catch(() => null);
+    const chatId = getHunterChatId(settings?.hunterChatId);
     if (chatId) {
       await sendTelegramMessage(
         chatId,

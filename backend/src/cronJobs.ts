@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { Application } from './models/Application';
 import { Scholarship } from './models/Scholarship';
+import { BotSettings } from './models/BotSettings';
 import { createNotification } from './controllers/notificationController';
 import { createAlert } from './controllers/alertController';
 import { sendTelegramMessage } from './services/telegramService';
@@ -156,9 +157,61 @@ export const startCronJobs = () => {
     }
   });
 
-  // Run AI scholarship hunter every day at 9:00 AM
-  cron.schedule('0 9 * * *', async () => {
-    console.log('Running AI Scholarship Hunter...');
-    await runScholarshipHunt();
+  // Run AI scholarship hunter based on settings
+  // Default: every day at 9:00 AM, configurable from admin dashboard
+  const scheduleHunter = async () => {
+    try {
+      const settings = await BotSettings.getSettings();
+      if (settings.huntEnabled) {
+        console.log(`[Hunter] Running with schedule: ${settings.huntSchedule}`);
+        await runScholarshipHunt();
+      }
+    } catch (error: any) {
+      console.error('[Hunter] Schedule error:', error.message);
+    }
+  };
+
+  // Check every hour if we need to run the hunt
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const settings = await BotSettings.getSettings();
+      if (!settings.huntEnabled) return;
+
+      const now = new Date();
+      const cronParts = settings.huntSchedule.split(' ');
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const dayOfMonth = now.getDate();
+      const month = now.getMonth() + 1;
+      const dayOfWeek = now.getDay();
+
+      // Simple cron matching (supports: minute hour dayOfMonth month dayOfWeek)
+      const matchField = (cronVal: string, actual: number): boolean => {
+        if (cronVal === '*') return true;
+        if (cronVal.includes(',')) return cronVal.split(',').some(v => matchField(v.trim(), actual));
+        if (cronVal.includes('-')) {
+          const [start, end] = cronVal.split('-').map(Number);
+          return actual >= start && actual <= end;
+        }
+        if (cronVal.includes('/')) {
+          const [, step] = cronVal.split('/');
+          return actual % parseInt(step) === 0;
+        }
+        return parseInt(cronVal) === actual;
+      };
+
+      if (
+        matchField(cronParts[0], minute) &&
+        matchField(cronParts[1], hour) &&
+        matchField(cronParts[2], dayOfMonth) &&
+        matchField(cronParts[3], month) &&
+        matchField(cronParts[4], dayOfWeek)
+      ) {
+        console.log('[Hunter] Cron triggered, running hunt...');
+        await runScholarshipHunt();
+      }
+    } catch (error: any) {
+      console.error('[Hunter] Cron check error:', error.message);
+    }
   });
 };
