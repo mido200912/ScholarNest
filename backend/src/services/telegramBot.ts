@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Scholarship } from '../models/Scholarship';
 import { answerCallbackQuery, editMessageText, sendTelegramMessage } from './telegramService';
 import { sendEmail } from './emailService';
+import { pendingHuntScholarships, saveAcceptedScholarship, generatePromotionalContent } from './scholarshipHunterService';
 
 const getApiUrl = () => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const SITE_URL = process.env.SITE_URL || 'http://localhost:5173';
@@ -147,12 +148,106 @@ const handleCallbackQuery = async (callbackQuery: any) => {
 
   if (!data || !chatId || !messageId) return;
 
-  const [action, scholarshipId] = data.split(':');
+  const [action, payload] = data.split(':');
 
-  if (!['accept', 'reject'].includes(action) || !scholarshipId) return;
+  // ── Handle Hunt Accept/Reject ──────────────────────────────────────────────
+  if (action === 'hunt_accept' || action === 'hunt_reject') {
+    const idx = parseInt(payload, 10);
+
+    if (isNaN(idx) || !pendingHuntScholarships.has(idx)) {
+      await answerCallbackQuery(id, 'المنحة لم تعد متاحة');
+      return;
+    }
+
+    const scholarshipData = pendingHuntScholarships.get(idx)!;
+    pendingHuntScholarships.delete(idx);
+
+    if (action === 'hunt_reject') {
+      const newText = [
+        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        '',
+        '❌ <b>تم الرفض</b>',
+      ].join('\n');
+
+      await editMessageText(chatId, messageId, newText);
+      await answerCallbackQuery(id, 'تم رفض المنحة');
+      return;
+    }
+
+    // Accept flow: save to DB + generate promo content
+    await answerCallbackQuery(id, 'جاري الحفظ وتوليد المحتوى الترويجي...');
+    await editMessageText(chatId, messageId, '⏳ <b>جاري الحفظ في قاعدة البيانات وتوليد المحتوى الترويجي...</b>');
+
+    try {
+      const saved = await saveAcceptedScholarship(scholarshipData);
+
+      const newText = [
+        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        '',
+        '✅ <b>تم القبول والحفظ في قاعدة البيانات</b>',
+        '',
+        `🔗 <a href="${SITE_URL}/scholarships/${saved._id}">عرض على الموقع</a>`,
+        '',
+        '⏳ <b>جاري توليد المحتوى الترويجي...</b>',
+      ].join('\n');
+
+      await editMessageText(chatId, messageId, newText);
+
+      // Generate promotional content
+      const promo = await generatePromotionalContent(saved);
+
+      // Send Arabic promo
+      await sendTelegramMessage(chatId, [
+        '📣 <b>المنشور الترويجي (عربي)</b>',
+        'للنشر على: واتساب + فيسبوك + الكوميونتي',
+        '─────────────────',
+        '',
+        promo.arabic,
+        '',
+        '─────────────────',
+        '📋 انسخ النص أعلاه والصقه في الواتساب والفيسبوك',
+      ].join('\n'));
+
+      // Send English promo
+      await sendTelegramMessage(chatId, [
+        '📣 <b>Promotional Post (English)</b>',
+        'For: WhatsApp + Facebook + Community',
+        '─────────────────',
+        '',
+        promo.english,
+        '',
+        '─────────────────',
+        '📋 Copy the text above and paste it on WhatsApp & Facebook',
+      ].join('\n'));
+
+      // Final confirmation
+      await editMessageText(chatId, messageId, [
+        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        '',
+        '✅ <b>تم القبول والحفظ والمحتوى الترويجي جاهز!</b>',
+        '',
+        `🔗 <a href="${SITE_URL}/scholarships/${saved._id}">عرض على الموقع</a>`,
+      ].join('\n'));
+
+    } catch (error: any) {
+      console.error('[Hunt Accept] Error:', error.message);
+      await editMessageText(chatId, messageId, [
+        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        '',
+        '❌ <b>حدث خطأ أثناء الحفظ</b>',
+        '',
+        `الخطأ: ${error.message?.substring(0, 100)}`,
+      ].join('\n'));
+    }
+
+    return;
+  }
+
+  // ── Handle Regular Accept/Reject (existing flow) ──────────────────────────
+  if (!['accept', 'reject'].includes(action) || !payload) return;
 
   try {
-    const scholarship = await Scholarship.findById(scholarshipId).populate('submittedBy', 'name email');
+    const scholarship = await Scholarship.findById(payload).populate('submittedBy', 'name email');
 
     if (!scholarship) {
       await answerCallbackQuery(id, 'المنحة لم تعد موجودة');

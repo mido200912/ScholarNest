@@ -5,6 +5,7 @@ import { createNotification } from './controllers/notificationController';
 import { createAlert } from './controllers/alertController';
 import { sendTelegramMessage } from './services/telegramService';
 import { User } from './models/User';
+import { runScholarshipHunt } from './services/scholarshipHunterService';
 
 export const cleanupExpiredScholarships = async () => {
   try {
@@ -153,5 +154,11 @@ export const startCronJobs = () => {
     } catch (error) {
       console.error('Error in deadline cron job:', error);
     }
+  });
+
+  // Run AI scholarship hunter every day at 9:00 AM
+  cron.schedule('0 9 * * *', async () => {
+    console.log('Running AI Scholarship Hunter...');
+    await runScholarshipHunt();
   });
 };
