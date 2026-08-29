@@ -12,15 +12,15 @@ const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ── Model Config ──────────────────────────────────────────────────────────────
 const GROQ_MODELS = {
-  chat: 'llama-3.1-8b-instant',  // 14,400 RPD, fast, most permissive
+  chat: 'llama-3.3-70b-versatile',  // Better tool support
   interview: 'llama-3.1-8b-instant',
   coverLetter: 'llama-3.1-8b-instant',
 };
 
 const OPENROUTER_MODELS = {
-  chat: 'openai/gpt-oss-20b:free',  // Free, reliable
-  interview: 'openai/gpt-oss-20b:free',
-  coverLetter: 'openai/gpt-oss-20b:free',
+  chat: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  interview: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  coverLetter: 'nvidia/nemotron-3-ultra-550b-a55b:free',
 };
 
 // ── Helper: Call OpenRouter ───────────────────────────────────────────────────
