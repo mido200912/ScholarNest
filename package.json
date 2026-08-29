@@ -1,4 +1,9 @@
 {
   "name": "scholarnest",
-  "private": true
+  "private": true,
+  "scripts": {
+    "install": "cd backend && npm install",
+    "build": "cd backend && npm run build",
+    "start": "cd backend && npm start"
+  }
 }
