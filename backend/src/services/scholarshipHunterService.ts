@@ -138,30 +138,32 @@ async function scrapeScholarshipSites(queries: string[]): Promise<{ results: any
     }
   }
 
-  // 2. Dynamic Bing Searches based on AI queries
+  // 2. Dynamic Google Searches based on AI queries using googlethis
   for (const query of queries) {
     try {
-      debug.push(`[Bing Search] Query: "${query}"`);
-      const r = await axios.get('https://www.bing.com/search', {
-        params: { q: query, count: 10 },
-        headers: HEADERS, timeout: 25000,
-      });
-      const $ = cheerio.load(r.data);
-      let bingCount = 0;
-      $('li.b_algo').each((_, el) => {
-        const title = $(el).find('h2 a').text().trim();
-        const url = $(el).find('h2 a').attr('href');
-        const snippet = $(el).find('.b_caption p, .b_algoSlug').text().trim();
-        if (title && url && !url.startsWith('https://www.bing.com') && !url.includes('bing.com/ck')) {
-          allResults.push({ title, description: snippet, url, source: 'Bing' });
-          bingCount++;
+      debug.push(`[Google Search] Query: "${query}"`);
+      const options = {
+        page: 0, 
+        safe: false, 
+        parse_ads: false,
+        additional_params: { hl: 'en' }
+      };
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const google = require('googlethis');
+      const response = await google.search(query, options);
+      
+      let googleCount = 0;
+      for (const res of response.results) {
+        if (res.title && res.url && !res.url.includes('google.com')) {
+          allResults.push({ title: res.title, description: res.description, url: res.url, source: 'Google' });
+          googleCount++;
         }
-      });
-      debug.push(`  - Found ${bingCount} results`);
+      }
+      debug.push(`  - Found ${googleCount} results`);
     } catch (e: any) {
       debug.push(`  - Error: ${(e.message || '').substring(0, 80)}`);
     }
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
 
   const seen = new Set<string>();
