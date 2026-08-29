@@ -1,9 +1,16 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-import google from 'googlethis';
 import { Scholarship } from '../models/Scholarship';
 import { AuthRequest } from '../middleware/auth';
 import Groq from 'groq-sdk';
+
+// Safely import googlethis (may not be available on all platforms)
+let googleSearch: any = null;
+try {
+  googleSearch = require('googlethis');
+} catch {
+  console.warn('[AI] googlethis not available, internet search will be disabled');
+}
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -172,9 +179,14 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
               : "No local scholarships found.";
           } else if (functionName === 'search_internet') {
             try {
-              const searchResults = await google.search(args.query, { page: 0, safe: false, parse_ads: false });
-              toolResult = JSON.stringify(searchResults.results.slice(0, 3).map(r => ({ title: r.title, description: r.description, url: r.url })));
-            } catch {
+              if (!googleSearch) {
+                toolResult = "Internet search is not available. Please search manually.";
+              } else {
+                const searchResults = await googleSearch.search(args.query, { page: 0, safe: false, parse_ads: false });
+                toolResult = JSON.stringify(searchResults.results.slice(0, 3).map((r: any) => ({ title: r.title, description: r.description, url: r.url })));
+              }
+            } catch (searchErr: any) {
+              console.error('[AI] Internet search error:', searchErr.message);
               toolResult = "Failed to search the internet.";
             }
           }
@@ -194,7 +206,8 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
         aiMessage = response.data.choices[0].message;
       }
     } catch (err: any) {
-      console.log('Groq chat failed, trying OpenRouter:', err.message?.substring(0, 100));
+      const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 300) : err.message;
+      console.error('[AI] Groq chat failed, trying OpenRouter:', detail);
       aiMessage = null;
     }
 
@@ -212,8 +225,9 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
     res.json({ success: true, message: aiMessage });
 
   } catch (error: any) {
-    console.error('AI Error:', error.message);
-    res.status(500).json({ success: false, message: 'AI Assistant is currently unavailable. Please try again later.' });
+    const detail = error.response?.data ? JSON.stringify(error.response.data).substring(0, 300) : error.message;
+    console.error('[AI] chatWithAI Error:', detail);
+    res.status(500).json({ success: false, message: `AI Assistant error: ${detail || 'unknown'}` });
   }
 };
 
