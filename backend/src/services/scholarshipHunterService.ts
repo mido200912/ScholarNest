@@ -1,16 +1,10 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import Groq from 'groq-sdk';
 import { Scholarship } from '../models/Scholarship';
 import { BotSettings } from '../models/BotSettings';
 import { sendTelegramMessage } from './telegramService';
-import google from 'googlethis';
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
-
 const getHunterChatId = (settingsChatId?: string): string => settingsChatId || process.env.HUNTER_CHAT_ID || '';
 const SITE_URL = process.env.SITE_URL || 'http://localhost:5173';
 
@@ -23,120 +17,232 @@ const HEADERS = {
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 };
 
-async function callGroq(messages: any[], maxTokens = 2000): Promise<string> {
-  const groq = getGroqClient();
-  const response = await groq.chat.completions.create({
-    messages,
-    model: 'llama-3.1-8b-instant',
-    temperature: 0.7,
-    max_tokens: maxTokens,
-  });
-  return response.choices[0]?.message?.content || '';
+// ── OpenRouter: 5 rotating keys ───────────────────────────────────────────────
+function getKeys(): string[] {
+  return [
+    process.env.OPENROUTER_API_KEY_1,
+    process.env.OPENROUTER_API_KEY_2,
+    process.env.OPENROUTER_API_KEY_3,
+    process.env.OPENROUTER_API_KEY_4,
+    process.env.OPENROUTER_API_KEY_5,
+    process.env.OPENROUTER_API_KEY, // fallback to single key if set
+  ].filter((k): k is string => !!k);
 }
 
-async function callOpenRouter(messages: any[], maxTokens = 2000): Promise<string> {
-  const response = await axios.post(
-    OPENROUTER_API_URL,
-    { model: 'nvidia/nemotron-3-ultra-550b-a55b:free', messages, temperature: 0.7, max_tokens: maxTokens },
-    { headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://scholarnest.com', 'X-Title': 'ScholarNest Hunter' }, timeout: 90000 }
-  );
-  return response.data.choices[0]?.message?.content || '';
-}
-
-async function callAI(messages: any[], maxTokens = 2000): Promise<string> {
-  try {
-    const result = await callGroq(messages, maxTokens);
-    if (result) return result;
-  } catch (err: any) {
-    console.log(`[Hunter Groq FAIL]: ${(err.response?.data?.error?.message || err.message || '').substring(0, 150)}`);
-  }
-  try {
-    const result = await callOpenRouter(messages, maxTokens);
-    if (result) return result;
-  } catch (err: any) {
-    console.log(`[Hunter OpenRouter FAIL]: ${(err.response?.data?.error?.message || err.message || '').substring(0, 150)}`);
-    throw err;
-  }
-  throw new Error('Both AI providers are unavailable');
-}
-
-// ── Agent Tools ────────────────────────────────────────────────────────────────
-const tools = [
-  {
-    type: "function",
-    function: {
-      name: "search_database",
-      description: "Search the local database to check if we already have scholarships matching a keyword, title, or university.",
-      parameters: {
-        type: "object",
-        properties: { query: { type: "string" } },
-        required: ["query"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "search_internet",
-      description: "Search Google to find new scholarship opportunities.",
-      parameters: {
-        type: "object",
-        properties: { query: { type: "string" } },
-        required: ["query"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "scrape_page",
-      description: "Fetch the text content of a webpage to read scholarship details.",
-      parameters: {
-        type: "object",
-        properties: { url: { type: "string" } },
-        required: ["url"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "submit_new_scholarships",
-      description: "Submit the final list of new, fully funded scholarships that are NOT in the database.",
-      parameters: {
-        type: "object",
-        properties: {
-          scholarships: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                titleEn: { type: "string" },
-                titleAr: { type: "string" },
-                descriptionEn: { type: "string" },
-                descriptionAr: { type: "string" },
-                countryEn: { type: "string" },
-                countryAr: { type: "string" },
-                universityEn: { type: "string" },
-                universityAr: { type: "string" },
-                degree: { type: "string", enum: ["Bachelor", "Master", "PhD", "Other"] },
-                fundingType: { type: "string", enum: ["Fully Funded", "Partially Funded"] },
-                majors: { type: "array", items: { type: "string" } },
-                deadline: { type: "string", description: "YYYY-MM-DD or empty if unknown" },
-                link: { type: "string", description: "Official application URL" },
-                keywords: { type: "array", items: { type: "string" } }
-              },
-              required: ["titleEn", "countryEn", "universityEn", "degree", "fundingType", "link"]
-            }
-          }
-        },
-        required: ["scholarships"]
-      }
-    }
-  }
+// Confirmed free models on OpenRouter (2025)
+const FREE_MODELS = [
+  'google/gemma-3-12b-it:free',
+  'qwen/qwen3-8b:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'google/gemma-2-9b-it:free',
+  'microsoft/phi-3-mini-128k-instruct:free',
 ];
 
-// ── Generate promotional content ───────────────────────────────────────────────
+// Key rotation state
+let keyIndex = 0;
+let modelIndex = 0;
+
+async function callAI(messages: any[], maxTokens = 2000): Promise<string> {
+  const keys = getKeys();
+  if (keys.length === 0) throw new Error('No OpenRouter API keys configured');
+
+  const errors: string[] = [];
+  // Try each key+model combination with rotation
+  for (let attempt = 0; attempt < keys.length * FREE_MODELS.length; attempt++) {
+    const key = keys[keyIndex % keys.length];
+    const model = FREE_MODELS[modelIndex % FREE_MODELS.length];
+    keyIndex++;
+    modelIndex++;
+
+    try {
+      const response = await axios.post(
+        OPENROUTER_API_URL,
+        { model, messages, temperature: 0.1, max_tokens: maxTokens },
+        {
+          headers: {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://scholarnest.up.railway.app',
+            'X-Title': 'ScholarNest Hunter',
+          },
+          timeout: 60000,
+        }
+      );
+      const content = response.data?.choices?.[0]?.message?.content;
+      if (content) {
+        console.log(`[Hunter AI] ✅ key:${keyIndex} model:${model}`);
+        return content;
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || err.message || 'unknown';
+      errors.push(`${model}: ${msg.substring(0, 80)}`);
+      console.warn(`[Hunter AI] ⚠️ ${model}: ${msg.substring(0, 80)}`);
+    }
+  }
+
+  throw new Error(`All OpenRouter keys/models failed. Last: ${errors.slice(-3).join(' | ')}`);
+}
+
+
+// ── AI Generates Search Queries ───────────────────────────────────────────────
+async function generateSearchQueries(existingTitlesSet: Set<string>): Promise<string[]> {
+  const prompt = `You are an expert scholarship hunter. We want to find NEW, fully funded scholarships for international students.
+Here are some scholarships we ALREADY HAVE (Do NOT search for these):
+${[...existingTitlesSet].slice(0, 40).join(', ')}
+
+Provide exactly 3 specific, highly effective search queries to find NEW scholarships. Focus on deep searches (e.g., "fully funded government scholarships 2026 site:gov.*" or "fully funded phd scholarship international site:edu").
+Return ONLY a JSON array of 3 strings. No markdown, no explanation, no emojis.
+Example: ["fully funded DAAD scholarship 2026", "Eiffel Excellence Scholarship 2026 apply"]`;
+
+  try {
+    const res = await callAI([{ role: 'user', content: prompt }], 1000);
+    const parsed = extractJsonArray(res);
+    if (parsed && parsed.length > 0) return parsed.map(String).slice(0, 3);
+  } catch (err: any) {
+    console.warn('[Hunter] Query generation failed:', err.message?.substring(0, 80));
+  }
+  return [
+    '"fully funded" "scholarship" "2026" OR "2027" "apply now" international students',
+    'fully funded government scholarships for international students 2026',
+  ];
+}
+
+// ── Scrape Scholarship Sites & Bing ───────────────────────────────────────────
+async function scrapeScholarshipSites(queries: string[]): Promise<{ results: any[]; debug: string[] }> {
+  const allResults: any[] = [];
+  const debug: string[] = [];
+
+  // 1. Static ScholarshipRoar (still a great source)
+  const PAGES = ['https://scholarshiproar.com/masters-scholarships/'];
+  for (const pageUrl of PAGES) {
+    try {
+      debug.push(`[Scraping] ScholarshipRoar...`);
+      const r = await axios.get(pageUrl, { headers: HEADERS, timeout: 20000 });
+      const $ = cheerio.load(r.data);
+      let found = 0;
+      $('h3').each((_, el) => {
+        let h3Text = $(el).text().trim().replace(/^\d+\.\s*/, '');
+        if (h3Text.length < 5 || h3Text.includes('POPULAR')) return;
+        let finalUrl = '';
+        const parentA = $(el).parent('a').attr('href');
+        if (parentA) finalUrl = parentA;
+        else finalUrl = $(el).find('a').attr('href') || '';
+        if (finalUrl && h3Text) {
+          allResults.push({ title: h3Text, description: h3Text, url: finalUrl, source: 'ScholarshipRoar' });
+          found++;
+        }
+      });
+      debug.push(`  - Found ${found} scholarships`);
+    } catch (e: any) {
+      debug.push(`  - Error: ${(e.message || '').substring(0, 80)}`);
+    }
+  }
+
+  // 2. Dynamic Bing Searches based on AI queries
+  for (const query of queries) {
+    try {
+      debug.push(`[Bing Search] Query: "${query}"`);
+      const r = await axios.get('https://www.bing.com/search', {
+        params: { q: query, count: 10 },
+        headers: HEADERS, timeout: 15000,
+      });
+      const $ = cheerio.load(r.data);
+      let bingCount = 0;
+      $('li.b_algo').each((_, el) => {
+        const title = $(el).find('h2 a').text().trim();
+        const url = $(el).find('h2 a').attr('href');
+        const snippet = $(el).find('.b_caption p, .b_algoSlug').text().trim();
+        if (title && url && !url.startsWith('https://www.bing.com') && !url.includes('bing.com/ck')) {
+          allResults.push({ title, description: snippet, url, source: 'Bing' });
+          bingCount++;
+        }
+      });
+      debug.push(`  - Found ${bingCount} results`);
+    } catch (e: any) {
+      debug.push(`  - Error: ${(e.message || '').substring(0, 80)}`);
+    }
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+
+  const seen = new Set<string>();
+  const unique = allResults.filter(r => { if (seen.has(r.url)) return false; seen.add(r.url); return true; });
+  debug.push(`[Summary] Total Unique: ${unique.length}`);
+  return { results: unique, debug };
+}
+
+// ── AI evaluates results ───────────────────────────────────────────────────────
+async function evaluateScholarshipsWithAI(rawResults: any[], existingTitlesSet: Set<string>): Promise<{ scholarships: any[]; debug: string }> {
+  if (rawResults.length === 0) return { scholarships: [], debug: 'No raw results' };
+
+  const allValid: any[] = [];
+  const BATCH = 5; // Small batches for reliable JSON output
+
+  for (let i = 0; i < Math.min(rawResults.length, 30); i += BATCH) {
+    const batch = rawResults.slice(i, i + BATCH);
+    const deadline = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const prompt = `Extract scholarship data as a JSON array. Return ONLY the JSON array, no emojis, no explanations, no markdown formatting.
+
+Input scholarships:
+${batch.map((r, idx) => `${idx + 1}. Title: "${r.title}" | URL: "${r.url}" | Info: "${(r.description || '').substring(0, 150)}"`).join('\n')}
+
+Skip these (already in DB):
+${[...existingTitlesSet].slice(0, 20).join(', ')}
+
+You MUST match this exact schema (with both English and Arabic translations):
+[{
+  "titleEn": "string",
+  "titleAr": "string (Arabic translation)",
+  "descriptionEn": "string (Detailed description)",
+  "descriptionAr": "string (Arabic detailed description)",
+  "countryEn": "string",
+  "countryAr": "string (Arabic translation)",
+  "universityEn": "string",
+  "universityAr": "string (Arabic translation)",
+  "degree": "Bachelor" | "Master" | "PhD" | "Other",
+  "fundingType": "Fully Funded" | "Partially Funded",
+  "majors": ["string"],
+  "deadline": "${deadline}",
+  "link": "string (Application URL)",
+  "keywords": ["string"]
+}]
+
+If no valid scholarships, return: []`;
+
+    try {
+      const raw = await callAI([{ role: 'user', content: prompt }], 2000);
+      let cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '');
+      const start = cleaned.indexOf('[');
+      const end = cleaned.lastIndexOf(']');
+      if (start === -1 || end === -1) {
+        console.warn(`[Hunter] Batch ${i}-${i+BATCH}: No JSON array found`);
+        continue;
+      }
+      const parsed = JSON.parse(cleaned.substring(start, end + 1));
+      if (!Array.isArray(parsed)) continue;
+
+      for (const s of parsed) {
+        if (!s.titleEn || !s.link) continue;
+        if (existingTitlesSet.has(s.titleEn.toLowerCase())) continue;
+        try { new URL(s.link); } catch { continue; }
+        allValid.push(s);
+      }
+      console.log(`[Hunter] Batch ${i}-${i+BATCH}: ${parsed.length} extracted, ${allValid.length} total valid`);
+    } catch (err: any) {
+      console.warn(`[Hunter] Batch ${i}-${i+BATCH} failed: ${err.message?.substring(0, 80)}`);
+    }
+
+    if (i + BATCH < rawResults.length) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  return {
+    scholarships: allValid,
+    debug: `[AI Evaluation] ${rawResults.length} raw -> ${allValid.length} valid (batches of ${BATCH})`
+  };
+}
+
+
+// ── Generate promo content ─────────────────────────────────────────────────────
 export async function generatePromotionalContent(scholarship: any): Promise<{ arabic: string; english: string }> {
   const prompt = `You are a professional social media content creator for ScholarNest.
 
@@ -151,22 +257,25 @@ Deadline: ${scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateSt
 Link: ${scholarship.link}
 Description: ${scholarship.description?.en || 'N/A'}
 
-1. Arabic Post: catchy hook, all details, hashtags, call to action
-2. English Post: same structure, English hashtags
+1. Arabic Post: catchy hook, all details, hashtags, call to action. NO EMOJIS.
+2. English Post: same structure, English hashtags. NO EMOJIS.
 
 Return JSON: { "arabic": "...", "english": "..." }
 Return ONLY valid JSON.`;
 
   try {
     const response = await callAI([{ role: 'user', content: prompt }], 2000);
-    let cleaned = response.trim();
-    if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-    const parsed = JSON.parse(cleaned);
-    return { arabic: parsed.arabic || 'N/A', english: parsed.english || 'N/A' };
+    let cleaned = response.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '');
+    const objStart = cleaned.indexOf('{');
+    const objEnd = cleaned.lastIndexOf('}');
+    if (objStart !== -1 && objEnd !== -1) {
+      const parsed = JSON.parse(cleaned.substring(objStart, objEnd + 1));
+      return { arabic: parsed.arabic || 'N/A', english: parsed.english || 'N/A' };
+    }
   } catch {
     return {
-      arabic: `🎓 منحة: ${scholarship.title.ar}\n🏛 الجامعة: ${scholarship.university.ar}\n🌍 البلد: ${scholarship.country.ar}\n💰 النوع: ${scholarship.fundingType}\n📅 الموعد النهائي: ${scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('ar-EG') : 'تحقق من الموقع'}\n🔗 التقديم: ${scholarship.link}`,
-      english: `🎓 Scholarship: ${scholarship.title.en}\n🏛 University: ${scholarship.university.en}\n🌍 Country: ${scholarship.country.en}\n💰 Type: ${scholarship.fundingType}\n📅 Deadline: ${scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('en-US') : 'Check website'}\n🔗 Apply: ${scholarship.link}`,
+      arabic: `Scholarship: ${scholarship.title.ar}\nUniversity: ${scholarship.university.ar}\nCountry: ${scholarship.country.ar}\nType: ${scholarship.fundingType}\nDeadline: ${scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('ar-EG') : 'Check website'}\nApply: ${scholarship.link}`,
+      english: `Scholarship: ${scholarship.title.en}\nUniversity: ${scholarship.university.en}\nCountry: ${scholarship.country.en}\nType: ${scholarship.fundingType}\nDeadline: ${scholarship.deadline ? new Date(scholarship.deadline).toLocaleDateString('en-US') : 'Check website'}\nApply: ${scholarship.link}`,
     };
   }
 }
@@ -175,35 +284,29 @@ Return ONLY valid JSON.`;
 export async function sendDiscoveredScholarshipsToTelegram(scholarships: any[], chatIdOverride?: string): Promise<void> {
   const chatId = chatIdOverride || getHunterChatId();
   if (!chatId) return;
-
-  if (scholarships.length === 0) {
-    return; // Let the caller handle the empty message
-  }
+  if (scholarships.length === 0) return;
 
   await sendTelegramMessage(chatId, [
-    '🎯 <b>نتائج البحث اليومي عن المنح</b>', '',
-    `تم العثور على <b>${scholarships.length}</b> منحة جديدة.`, 'اختر القبول أو الرفض:', '─────────────────',
+    '[DAILY SCHOLARSHIP HUNT RESULTS]', '',
+    `Found ${scholarships.length} new scholarships.`, 'Review the results below:', '-------------------------',
   ].join('\n'));
 
   for (const s of scholarships) {
     const idx = huntScholarshipIndex++;
     pendingHuntScholarships.set(idx, s);
-
-    const message = [
-      `🎓 <b>${escapeHtml(s.titleEn)}</b>`,
-      `🏛 <b>الجامعة:</b> ${escapeHtml(s.universityEn)}`,
-      `🌍 <b>البلد:</b> ${escapeHtml(s.countryEn)}`,
-      `💰 <b>النوع:</b> ${s.fundingType}`,
-      `📚 <b>المستوى:</b> ${s.degree}`,
-      `📅 <b>الموعد النهائي:</b> ${s.deadline ? new Date(s.deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير محدد'}`,
-      `🔗 <a href="${s.link}">رابط التقديم</a>`, '',
-      `📝 ${escapeHtml((s.descriptionEn || '').substring(0, 150))}...`,
-    ].join('\n');
-
-    await sendTelegramMessage(chatId, message, {
+    await sendTelegramMessage(chatId, [
+      `[TITLE]: ${escapeHtml(s.titleEn)}`,
+      `[UNIVERSITY]: ${escapeHtml(s.universityEn)}`,
+      `[COUNTRY]: ${escapeHtml(s.countryEn)}`,
+      `[FUNDING]: ${s.fundingType}`,
+      `[DEGREE]: ${s.degree}`,
+      `[DEADLINE]: ${s.deadline ? new Date(s.deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown'}`,
+      `[LINK]: <a href="${s.link}">Application Link</a>`, '',
+      `[INFO]: ${escapeHtml((s.descriptionEn || '').substring(0, 150))}...`,
+    ].join('\n'), {
       inline_keyboard: [[
-        { text: '✅ قبول ونشر', callback_data: `hunt_accept:${idx}` },
-        { text: '❌ رفض', callback_data: `hunt_reject:${idx}` },
+        { text: 'Accept and Publish', callback_data: `hunt_accept:${idx}` },
+        { text: 'Reject', callback_data: `hunt_reject:${idx}` },
       ]],
     });
   }
@@ -214,203 +317,90 @@ export async function saveAcceptedScholarship(data: any): Promise<any> {
   const adminUserId = '000000000000000000000001';
   const existing = await Scholarship.findOne({ 'title.en': data.titleEn });
   if (existing) return existing;
-
   const scholarship = new Scholarship({
     title: { en: data.titleEn, ar: data.titleAr || data.titleEn },
     description: { en: data.descriptionEn || 'Discovered by AI Hunter', ar: data.descriptionAr || 'تم اكتشافها بواسطة الصياد الذكي' },
     country: { en: data.countryEn, ar: data.countryAr || data.countryEn },
     university: { en: data.universityEn, ar: data.universityAr || data.universityEn },
-    degree: data.degree || 'Other',
-    fundingType: data.fundingType || 'Partially Funded',
+    degree: data.degree || 'Other', fundingType: data.fundingType || 'Partially Funded',
     majors: data.majors || [],
     deadline: data.deadline ? new Date(data.deadline) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-    link: data.link,
-    keywords: data.keywords || [],
-    status: 'approved',
-    submittedBy: adminUserId,
+    link: data.link, keywords: data.keywords || [], status: 'approved', submittedBy: adminUserId,
   });
-
   await scholarship.save();
   console.log(`[Hunter] Saved: ${data.titleEn}`);
   return scholarship;
 }
 
-// ── Main Hunt (Agentic Loop) ───────────────────────────────────────────────────
+// ── Main Hunt ──────────────────────────────────────────────────────────────────
 export async function runScholarshipHunt(): Promise<void> {
-  console.log('[Hunter Agent] Starting...');
+  console.log('[Hunter] Starting...');
   const debugLines: string[] = [];
   const startTime = Date.now();
-  const log = (msg: string) => { debugLines.push(msg); console.log(`[Hunter Agent] ${msg}`); };
+  const log = (msg: string) => { debugLines.push(msg); console.log(`[Hunter] ${msg}`); };
 
   try {
     const settings = await BotSettings.getSettings();
-    if (!settings.huntEnabled) { log('⚠️ Disabled'); return; }
-
+    if (!settings.huntEnabled) { log('[Status] Disabled'); return; }
     const chatId = getHunterChatId(settings.hunterChatId);
 
-    log('━━━ Initiating AI Agent ━━━');
+    log('--- STEP 1: DB Context & Query Gen ---');
+    const existingTitles = await Scholarship.find({}, 'title.en').lean();
+    const existingTitlesSet = new Set(existingTitles.map((s: any) => s.title.en?.toLowerCase()));
+    log(`[DB] Contains ${existingTitlesSet.size} scholarships`);
     
-    // Pick one search query from settings to guide the AI
-    const randomQuery = settings.searchQueries && settings.searchQueries.length > 0
-      ? settings.searchQueries[Math.floor(Math.random() * settings.searchQueries.length)]
-      : '"fully funded" scholarship 2026';
+    const queries = await generateSearchQueries(existingTitlesSet);
+    log(`[AI] Generated ${queries.length} queries`);
 
-    const systemPrompt = `You are an elite automated scholarship hunter for ScholarNest.
-Your task is to find 2-4 NEW, high-quality (preferably Fully Funded) scholarships.
+    log('--- STEP 2: Scraping ---');
+    const { results: rawResults, debug: scrapeDebug } = await scrapeScholarshipSites(queries);
+    debugLines.push(...scrapeDebug);
+    log(`[Results] Raw count: ${rawResults.length}`);
 
-GUIDELINES:
-1. You MUST check the local database FIRST using search_database to avoid duplicating existing scholarships.
-2. Use search_internet to look for new opportunities based on this topic: "${randomQuery}".
-3. Use scrape_page to read the details of promising URLs.
-4. DO NOT include scholarships that are already in the database.
-5. Once you have found the new scholarships and confirmed they are not duplicates, call submit_new_scholarships with the structured JSON data.
-
-Work methodically. You have a maximum of 15 tool calls.`;
-
-    let messages: any[] = [{ role: 'system', content: systemPrompt }];
-    const groq = getGroqClient();
-    let finalScholarships: any[] = [];
-    let loopCount = 0;
-    
-    while (loopCount < 15) {
-      loopCount++;
-      log(`🔄 Agent Step ${loopCount}...`);
-      
-      let aiMessage: any;
-      try {
-        const orResponse = await axios.post(
-          OPENROUTER_API_URL,
-          {
-            model: 'meta-llama/llama-3.3-70b-instruct:free',
-            messages: messages,
-            temperature: 0.2,
-            tools: tools,
-            tool_choice: 'auto',
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-              'Content-Type': 'application/json',
-              'HTTP-Referer': 'https://scholarnest.com',
-              'X-Title': 'ScholarNest Hunter',
-            },
-            timeout: 60000,
-          }
-        );
-        aiMessage = orResponse.data.choices[0]?.message;
-      } catch (err: any) {
-        log(`⚠️ OpenRouter failed: ${err.message}. Trying Groq...`);
-        const groqResponse = await groq.chat.completions.create({
-          model: 'llama-3.1-8b-instant',
-          messages: messages,
-          temperature: 0.2,
-          tools: tools as any,
-          tool_choice: "auto",
-          max_tokens: 4000
-        });
-        aiMessage = groqResponse.choices[0]?.message;
-      }
-      if (!aiMessage) throw new Error("No response from AI");
-      
-      messages.push(aiMessage);
-
-      if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
-        let submissionReceived = false;
-
-        for (const toolCall of aiMessage.tool_calls) {
-          const fnName = toolCall.function.name;
-          let args: any = {};
-          try { args = JSON.parse(toolCall.function.arguments); } catch(e) {}
-          
-          let toolResult = "";
-          log(`🛠️ Tool: ${fnName}(${JSON.stringify(args).substring(0, 50)})`);
-
-          try {
-            if (fnName === 'search_database') {
-              const q = args.query || '';
-              const results = await Scholarship.find(
-                { $or: [{ 'title.en': { $regex: q, $options: 'i' } }, { 'university.en': { $regex: q, $options: 'i' } }] }
-              ).limit(5).select('title university country link');
-              toolResult = results.length > 0 ? JSON.stringify(results) : "No matching scholarships found in database.";
-            } 
-            else if (fnName === 'search_internet') {
-              const res = await google.search(args.query, { page: 0, safe: false, parse_ads: false });
-              toolResult = JSON.stringify(res.results.slice(0, 5).map(r => ({ title: r.title, url: r.url, snippet: r.description })));
-            }
-            else if (fnName === 'scrape_page') {
-              const r = await axios.get(args.url, { headers: HEADERS, timeout: 10000 });
-              const $ = cheerio.load(r.data);
-              toolResult = $('body').text().replace(/\s+/g, ' ').substring(0, 3000); // Truncate to save tokens
-            }
-            else if (fnName === 'submit_new_scholarships') {
-              finalScholarships = args.scholarships || [];
-              toolResult = "Successfully submitted. Terminating.";
-              submissionReceived = true;
-            }
-            else {
-              toolResult = "Unknown tool.";
-            }
-          } catch (e: any) {
-             toolResult = `Error executing tool: ${e.message}`;
-             log(`⚠️ Tool Error: ${e.message}`);
-          }
-
-          messages.push({ role: "tool", tool_call_id: toolCall.id, name: fnName, content: toolResult });
-        }
-
-        if (submissionReceived) {
-          log('✅ Agent submitted scholarships. Exiting loop.');
-          break; 
-        }
-      } else {
-        log(`💬 AI: ${aiMessage.content?.substring(0, 100)}`);
-        messages.push({ role: 'user', content: 'Please use the submit_new_scholarships tool to output the final results, or use other tools to continue searching.' });
-      }
-    }
-
-    log('━━━ STEP 3: Verification & Telegram ━━━');
-    
-    // Filter out any that slipped through
-    const uniqueScholarships = [];
-    for(const s of finalScholarships) {
-      const exists = await Scholarship.exists({ 'title.en': s.titleEn });
-      if(!exists) { uniqueScholarships.push(s); }
-      else { log(`🗑️ Filtered duplicate: ${s.titleEn}`); }
-    }
-
-    log(`✅ Final Valid: ${uniqueScholarships.length}`);
-    await sendDiscoveredScholarshipsToTelegram(uniqueScholarships, chatId);
-
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    if (uniqueScholarships.length > 0) {
-      log(`🎉 Found ${uniqueScholarships.length} scholarships!`);
-      // sendDiscoveredScholarshipsToTelegram was already called above
-    } else {
-      const hasErrors = debugLines.some(l => l.includes('⚠️') || l.includes('Error') || l.includes('fail') || l.includes('💥'));
+    if (rawResults.length === 0) {
       if (chatId) {
         await sendTelegramMessage(chatId, [
-          '🔍 <b>نتيجة البحث</b>', '', 
-          hasErrors ? '⚠️ <b>لم يتم العثور على منح بسبب أخطاء أثناء البحث!</b>' : '❌ <b>لم يتم العثور على منح جديدة.</b>',
-          '',
-          `📊 <b>سجل العمليات (آخر الخطوات):</b>`,
-          ...debugLines.slice(-20).map(l => `  ${l}`), 
-          '',
-          `⏱️ ${elapsed}s`,
+          '[SEARCH RESULTS]', '', 'No results found.', '',
+          '[DETAILS]:', ...debugLines.map(l => `  ${l}`), '',
+          `[TIME]: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+        ].join('\n'));
+      }
+      return;
+    }
+
+    log('--- STEP 3: AI Evaluation ---');
+    const { scholarships: evaluated, debug: aiDebug } = await evaluateScholarshipsWithAI(rawResults, existingTitlesSet);
+    log(aiDebug);
+    log(`[Evaluation] Valid count: ${evaluated.length}`);
+
+    log('--- STEP 4: Telegram Notification ---');
+    await sendDiscoveredScholarshipsToTelegram(evaluated, chatId);
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    if (evaluated.length > 0) {
+      log(`[Success] Found ${evaluated.length} scholarships`);
+    } else {
+      if (chatId) {
+        await sendTelegramMessage(chatId, [
+          '[SEARCH RESULTS]', '', `[SUMMARY]:`, ...debugLines.map(l => `  ${l}`), '',
+          `[TIME]: ${elapsed}s`,
         ].join('\n'));
       }
     }
-    log(`⏱️ Total: ${elapsed}s`);
-
+    log(`[Duration] Total: ${elapsed}s`);
   } catch (error: any) {
-    const errMsg = error.response?.data?.error?.message || error.message || 'Unknown';
-    log(`💥 ERROR: ${errMsg}`);
+    const errMsg = error.response?.data?.error?.message || error.message || 'Unknown Error';
+    const errStack = error.stack || 'No stack trace available';
+    log(`[ERROR] ${errMsg}`);
     const settings = await BotSettings.getSettings().catch(() => null);
     const chatId = getHunterChatId(settings?.hunterChatId);
     if (chatId) {
       await sendTelegramMessage(chatId, [
-        '⚠️ <b>خطأ في الوكيل الذكي (Agent)</b>', '', `💥 ${escapeHtml(errMsg)}`, '',
-        ...debugLines.slice(-10).map(l => `  ${l}`), '',
-        `⏱️ ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+        '[SYSTEM ERROR IN HUNTER]', '', 
+        `[MESSAGE]: ${escapeHtml(errMsg)}`, '',
+        `[STACK TRACE]:\n<pre>${escapeHtml(errStack.substring(0, 1000))}</pre>`, '',
+        `[LOGS]:`, ...debugLines.map(l => `  ${l}`), '',
+        `[TIME]: ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
       ].join('\n'));
     }
   }
@@ -418,4 +408,48 @@ Work methodically. You have a maximum of 15 tool calls.`;
 
 function escapeHtml(text: string): string {
   return (text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Robust JSON array extractor (handles think tags, markdown, extra text) ──────
+function extractJsonArray(text: string): any[] | null {
+  let cleaned = text.trim();
+  // Strip <think>...</think> blocks
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  // Strip markdown code fences
+  cleaned = cleaned.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+  // Try direct parse first
+  try {
+    const arr = JSON.parse(cleaned);
+    if (Array.isArray(arr)) return arr;
+  } catch {}
+  // Find first [ and last ] for greedy match
+  const firstBracket = cleaned.indexOf('[');
+  const lastBracket = cleaned.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket > firstBracket) {
+    const candidate = cleaned.substring(firstBracket, lastBracket + 1);
+    try {
+      const arr = JSON.parse(candidate);
+      if (Array.isArray(arr)) return arr;
+    } catch {}
+    // Try fixing common issues: trailing commas, single quotes
+    try {
+      const fixed = candidate.replace(/,\s*([\]}])/g, '$1').replace(/'/g, '"');
+      const arr = JSON.parse(fixed);
+      if (Array.isArray(arr)) return arr;
+    } catch {}
+  }
+  return null;
+}
+
+function extractJsonObject(text: string): any | null {
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  cleaned = cleaned.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try { return JSON.parse(cleaned.substring(firstBrace, lastBrace + 1)); } catch {}
+  }
+  return null;
 }

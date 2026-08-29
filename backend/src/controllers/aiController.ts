@@ -2,86 +2,67 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { Scholarship } from '../models/Scholarship';
 import { AuthRequest } from '../middleware/auth';
-import Groq from 'groq-sdk';
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
+// ── 5 OpenRouter Keys ─────────────────────────────────────────────────────────
+function getKeys(): string[] {
+  return [
+    process.env.OPENROUTER_API_KEY_1,
+    process.env.OPENROUTER_API_KEY_2,
+    process.env.OPENROUTER_API_KEY_3,
+    process.env.OPENROUTER_API_KEY_4,
+    process.env.OPENROUTER_API_KEY_5,
+  ].filter(Boolean);
+}
 
-// ── Model Config ──────────────────────────────────────────────────────────────
-const GROQ_MODELS = {
-  chat: 'llama-3.3-70b-versatile',
-  interview: 'llama-3.1-8b-instant',
-  coverLetter: 'llama-3.1-8b-instant',
-};
+const OPENROUTER_MODELS = [
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'nvidia/nemotron-3.5-lightning:free',
+  'minimax/minimax-m3:free',
+  'poolside/laguna-s-2.1:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+];
 
-const OPENROUTER_MODELS = {
-  chat: 'meta-llama/llama-3.1-8b-instruct:free',
-  interview: 'meta-llama/llama-3.1-8b-instruct:free',
-  coverLetter: 'meta-llama/llama-3.1-8b-instruct:free',
-};
+// ── Helper: Call OpenRouter with 5 keys × 5 models fallback ────────────────────
+async function callAI(messages: any[], maxTokens = 1000): Promise<string> {
+  const OPENROUTER_KEYS = getKeys();
+  const errors: string[] = [];
 
-// ── Helper: Call OpenRouter ───────────────────────────────────────────────────
-async function callOpenRouter(messages: any[], model: string, maxTokens = 1000): Promise<string> {
-  const response = await axios.post(
-    OPENROUTER_API_URL,
-    {
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://scholarnest.up.railway.app',
-        'X-Title': 'ScholarNest AI',
-      },
-      timeout: 60000,
+  for (let ki = 0; ki < OPENROUTER_KEYS.length; ki++) {
+    const apiKey = OPENROUTER_KEYS[ki];
+    for (let mi = 0; mi < OPENROUTER_MODELS.length; mi++) {
+      const model = OPENROUTER_MODELS[mi];
+      try {
+        const response = await axios.post(
+          OPENROUTER_API_URL,
+          { model, messages, temperature: 0.7, max_tokens: maxTokens },
+          {
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://scholarnest.up.railway.app',
+              'X-Title': 'ScholarNest AI',
+            },
+            timeout: 60000,
+          }
+        );
+        const content = response.data?.choices?.[0]?.message?.content;
+        if (content) {
+          console.log(`[AI] ✅ key:${ki + 1} model:${model}`);
+          return content;
+        }
+        errors.push(`key${ki + 1}/${model}: empty`);
+      } catch (err: any) {
+        const msg = err.response?.data?.error?.message || err.message || 'unknown';
+        errors.push(`key${ki + 1}/${model}: ${msg.substring(0, 80)}`);
+      }
     }
-  );
-  const content = response.data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('OpenRouter returned empty response');
-  return content;
-}
-
-// ── Helper: Call Groq ────────────────────────────────────────────────────────
-async function callGroq(messages: any[], model: string, maxTokens = 1000): Promise<string> {
-  const groq = getGroqClient();
-  const response = await groq.chat.completions.create({
-    messages,
-    model,
-    temperature: 0.7,
-    max_tokens: maxTokens,
-  });
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error('Groq returned empty response');
-  return content;
-}
-
-// ── Helper: OpenRouter first, fallback to Groq ───────────────────────────────
-async function callAI(messages: any[], purpose: 'chat' | 'interview' | 'coverLetter', maxTokens = 1000): Promise<string> {
-  // Try OpenRouter first
-  try {
-    const result = await callOpenRouter(messages, OPENROUTER_MODELS[purpose], maxTokens);
-    if (result) return result;
-  } catch (err: any) {
-    const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 200) : err.message;
-    console.warn(`[AI] OpenRouter FAIL (${purpose}): ${detail}`);
   }
 
-  // Fallback to Groq
-  try {
-    const result = await callGroq(messages, GROQ_MODELS[purpose], maxTokens);
-    if (result) return result;
-  } catch (err: any) {
-    const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 200) : err.message;
-    console.warn(`[AI] Groq FAIL (${purpose}): ${detail}`);
-  }
-
-  throw new Error('Both AI providers (OpenRouter + Groq) are currently unavailable.');
+  console.error(`[AI] ❌ All OpenRouter combinations failed`);
+  errors.slice(-3).forEach(e => console.error(`  - ${e}`));
+  throw new Error('All AI providers are currently unavailable.');
 }
 
 // ── Local DB search helper ────────────────────────────────────────────────────
@@ -117,27 +98,6 @@ async function searchLocalScholarships(query: string) {
   }
 }
 
-// Define available tools
-const tools = [
-  {
-    type: "function",
-    function: {
-      name: "search_local_scholarships",
-      description: "Search the ScholarNest database for scholarships by keyword, country, degree, university, or funding type.",
-      parameters: {
-        type: "object",
-        properties: {
-          searchQuery: {
-            type: "string",
-            description: "Search term like 'Computer Science UK', 'Fully Funded PhD', 'Germany Masters'"
-          }
-        },
-        required: ["searchQuery"]
-      }
-    }
-  }
-];
-
 // ── Main Chat Handler ─────────────────────────────────────────────────────────
 // @desc    Chat with AI
 // @route   POST /api/ai/chat
@@ -157,81 +117,13 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
       You help students find scholarships, write motivation letters, and answer questions.
       Always be professional, concise, and encouraging.
       You can understand and reply in both Arabic and English.
-      If the user is asking for scholarships, use the search_local_scholarships tool to find them.`
+      If the user is asking for scholarships, tell them to use the search feature on ScholarNest.`
     };
 
-    let currentMessages: any[] = [systemPrompt, ...messages];
-    let aiMessage: any = null;
+    const fullMessages = [systemPrompt, ...messages];
+    const content = await callAI(fullMessages, 1000);
 
-    // ── Try Groq with tool support ──────────────────────────────────────────
-    try {
-      const payload = {
-        model: GROQ_MODELS.chat,
-        messages: currentMessages,
-        temperature: 0.7,
-        tools,
-        tool_choice: "auto",
-        max_tokens: 1000,
-      };
-
-      let response = await axios.post(GROQ_API_URL, payload, {
-        headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000
-      });
-
-      aiMessage = response.data.choices?.[0]?.message;
-
-      // Handle tool calls
-      if (aiMessage?.tool_calls && aiMessage.tool_calls.length > 0) {
-        currentMessages.push(aiMessage);
-
-        for (const toolCall of aiMessage.tool_calls) {
-          const args = JSON.parse(toolCall.function.arguments || '{}');
-          const toolResult = await searchLocalScholarships(args.searchQuery || '');
-          currentMessages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            name: toolCall.function.name,
-            content: toolResult
-          });
-        }
-
-        response = await axios.post(GROQ_API_URL, {
-          model: GROQ_MODELS.chat,
-          messages: currentMessages,
-          temperature: 0.7,
-          max_tokens: 1000,
-        }, {
-          headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-          timeout: 30000
-        });
-
-        aiMessage = response.data.choices?.[0]?.message;
-      }
-
-      if (!aiMessage?.content) throw new Error('Empty response from Groq');
-    } catch (err: any) {
-      const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 300) : err.message;
-      console.warn('[AI] Groq tool-chat failed, trying OpenRouter simple chat:', detail);
-      aiMessage = null;
-    }
-
-    // ── Fallback: OpenRouter simple chat (no tools) ──────────────────────────
-    if (!aiMessage?.content) {
-      try {
-        const content = await callOpenRouter(currentMessages.filter(m => m.role !== 'tool'), OPENROUTER_MODELS.chat, 1000);
-        aiMessage = { role: 'assistant', content };
-      } catch (err: any) {
-        const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 300) : err.message;
-        console.error('[AI] OpenRouter simple chat also failed:', detail);
-        throw new Error(`All AI providers failed. Last error: ${detail}`);
-      }
-    }
-
-    res.json({ success: true, message: aiMessage });
+    res.json({ success: true, message: { role: 'assistant', content } });
 
   } catch (error: any) {
     const detail = error.response?.data ? JSON.stringify(error.response.data).substring(0, 300) : error.message;
@@ -262,7 +154,7 @@ export const generateCoverLetter = async (req: AuthRequest, res: Response) => {
 
       Write a final, professional 300-400 word cover letter. No placeholders.`;
 
-    const coverLetter = await callAI([{ role: 'user', content: prompt }], 'coverLetter', 1500);
+    const coverLetter = await callAI([{ role: 'user', content: prompt }], 1500);
 
     res.json({ success: true, data: coverLetter });
   } catch (error: any) {
@@ -290,7 +182,7 @@ export const chatInterview = async (req: Request, res: Response): Promise<void> 
       ...history
     ];
 
-    const reply = await callAI(messages, 'interview', 500);
+    const reply = await callAI(messages, 500);
 
     res.json({ success: true, data: reply });
   } catch (error: any) {

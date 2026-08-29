@@ -336,6 +336,11 @@ const pollUpdates = async () => {
 };
 
 export const startBotPolling = () => {
+  // Only poll in production (Railway). In development, Railway already handles it.
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⏭️ Telegram bot polling skipped (development mode - Railway handles this in production)');
+    return;
+  }
   console.log('🤖 Telegram bot polling started');
   setInterval(pollUpdates, 2000);
   pollUpdates();

@@ -1,6 +1,10 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Force IPv4 to prevent ENETUNREACH errors on networks without full IPv6 support
+import dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
+
 import app from './app';
 import { connectDB } from './config/db';
 import { startCronJobs, cleanupExpiredScholarships } from './cronJobs';
