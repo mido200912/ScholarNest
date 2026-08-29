@@ -40,7 +40,7 @@ export const sendDeadlineReminders = async () => {
       const deadline = new Date(scholarship.deadline);
       const diffHours = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-      let alertType = '';
+      let alertType: 'deadline_7days' | 'deadline_3days' | 'deadline_1day' | null = null;
       let title = { en: '', ar: '' };
       let message = { en: '', ar: '' };
 

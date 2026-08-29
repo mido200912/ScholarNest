@@ -31,11 +31,11 @@ function getKeys(): string[] {
 
 // Confirmed free models on OpenRouter (2025)
 const FREE_MODELS = [
-  'google/gemma-3-12b-it:free',
-  'qwen/qwen3-8b:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'google/gemma-2-9b-it:free',
-  'microsoft/phi-3-mini-128k-instruct:free',
+  'google/gemini-2.0-flash-lite-preview-02-05:free',
+  'cognitivecomputations/dolphin3.0-r1-mistral-24b:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+  'huggingfaceh4/zephyr-7b-beta:free'
 ];
 
 // Key rotation state
@@ -144,7 +144,7 @@ async function scrapeScholarshipSites(queries: string[]): Promise<{ results: any
       debug.push(`[Bing Search] Query: "${query}"`);
       const r = await axios.get('https://www.bing.com/search', {
         params: { q: query, count: 10 },
-        headers: HEADERS, timeout: 15000,
+        headers: HEADERS, timeout: 25000,
       });
       const $ = cheerio.load(r.data);
       let bingCount = 0;
