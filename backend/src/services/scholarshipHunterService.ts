@@ -385,10 +385,17 @@ Work methodically. You have a maximum of 15 tool calls.`;
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     if (uniqueScholarships.length > 0) {
       log(`🎉 Found ${uniqueScholarships.length} scholarships!`);
+      // sendDiscoveredScholarshipsToTelegram was already called above
     } else {
+      const hasErrors = debugLines.some(l => l.includes('⚠️') || l.includes('Error') || l.includes('fail') || l.includes('💥'));
       if (chatId) {
         await sendTelegramMessage(chatId, [
-          '🔍 <b>نتيجة البحث</b>', '', `📊 <b>ملخص:</b>`, ...debugLines.map(l => `  ${l}`), '',
+          '🔍 <b>نتيجة البحث</b>', '', 
+          hasErrors ? '⚠️ <b>لم يتم العثور على منح بسبب أخطاء أثناء البحث!</b>' : '❌ <b>لم يتم العثور على منح جديدة.</b>',
+          '',
+          `📊 <b>سجل العمليات (آخر الخطوات):</b>`,
+          ...debugLines.slice(-20).map(l => `  ${l}`), 
+          '',
           `⏱️ ${elapsed}s`,
         ].join('\n'));
       }
