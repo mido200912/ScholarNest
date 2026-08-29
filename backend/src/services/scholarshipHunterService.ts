@@ -4,6 +4,7 @@ import Groq from 'groq-sdk';
 import { Scholarship } from '../models/Scholarship';
 import { BotSettings } from '../models/BotSettings';
 import { sendTelegramMessage } from './telegramService';
+import google from 'googlethis';
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -26,7 +27,7 @@ async function callGroq(messages: any[], maxTokens = 2000): Promise<string> {
   const groq = getGroqClient();
   const response = await groq.chat.completions.create({
     messages,
-    model: 'llama-3.3-70b-versatile',
+    model: 'llama-3.1-8b-instant',
     temperature: 0.7,
     max_tokens: maxTokens,
   });
@@ -36,7 +37,7 @@ async function callGroq(messages: any[], maxTokens = 2000): Promise<string> {
 async function callOpenRouter(messages: any[], maxTokens = 2000): Promise<string> {
   const response = await axios.post(
     OPENROUTER_API_URL,
-    { model: 'meta-llama/llama-4-scout:free', messages, temperature: 0.7, max_tokens: maxTokens },
+    { model: 'nvidia/nemotron-3-ultra-550b-a55b:free', messages, temperature: 0.7, max_tokens: maxTokens },
     { headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://scholarnest.com', 'X-Title': 'ScholarNest Hunter' }, timeout: 90000 }
   );
   return response.data.choices[0]?.message?.content || '';
@@ -59,223 +60,81 @@ async function callAI(messages: any[], maxTokens = 2000): Promise<string> {
   throw new Error('Both AI providers are unavailable');
 }
 
-// ── Scrape individual scholarship detail pages ─────────────────────────────────
-async function scrapeDetailPage(url: string): Promise<{ title: string; description: string; applyUrl: string } | null> {
-  try {
-    const r = await axios.get(url, { headers: HEADERS, timeout: 15000 });
-    const $ = cheerio.load(r.data);
-
-    const title = $('h1, .entry-title').first().text().trim();
-    const content = $('.entry-content, .post-content, article').first().text().trim().substring(0, 1000);
-
-    let applyUrl = '';
-    $('.entry-content a, .post-content a, article a').each((_, el) => {
-      const href = $(el).attr('href') || '';
-      const text = $(el).text().trim().toLowerCase();
-      if (!applyUrl && href.startsWith('http') && !href.includes('scholarshiproar.com') &&
-          (text.includes('apply') || text.includes('official') || text.includes('website') || text.includes('visit') || text.includes('apply now'))) {
-        applyUrl = href;
+// ── Agent Tools ────────────────────────────────────────────────────────────────
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "search_database",
+      description: "Search the local database to check if we already have scholarships matching a keyword, title, or university.",
+      parameters: {
+        type: "object",
+        properties: { query: { type: "string" } },
+        required: ["query"]
       }
-    });
-
-    return { title, description: content, applyUrl };
-  } catch {
-    return null;
-  }
-}
-
-// ── Step 1: Scrape scholarship aggregator sites ────────────────────────────────
-async function scrapeScholarshipSites(): Promise<{ results: any[]; debug: string[] }> {
-  const allResults: any[] = [];
-  const debug: string[] = [];
-
-  // Scrape multiple pages from ScholarshipROAR
-  const PAGES = [
-    'https://scholarshiproar.com/masters-scholarships/',
-    'https://scholarshiproar.com/phd-scholarships/',
-    'https://scholarshiproar.com/fully-funded-scholarships/',
-  ];
-
-  for (const pageUrl of PAGES) {
-    try {
-      const section = pageUrl.split('/').slice(-2, -1)[0];
-      debug.push(`🔍 Scraping ${section}...`);
-      const r = await axios.get(pageUrl, { headers: HEADERS, timeout: 20000 });
-      const $ = cheerio.load(r.data);
-
-      // Extract scholarships from H3 headings
-      const h3s = $('h3');
-      let found = 0;
-      h3s.each((_, el) => {
-        let h3Text = $(el).text().trim().replace(/^\d+\.\s*/, '');
-        if (h3Text.length < 5 || h3Text.includes('POPULAR') || h3Text.includes('Follow') || h3Text.includes('CATEGORY')) return;
-
-        // Find links near this H3 - look for external links (official sites)
-        let officialUrl = '';
-        let roarUrl = '';
-
-        // Check if H3 itself is wrapped in a link
-        const parentA = $(el).parent('a').attr('href');
-        if (parentA) {
-          if (parentA.includes('scholarshiproar.com')) roarUrl = parentA;
-          else officialUrl = parentA;
-        }
-
-        // Check links inside H3
-        $(el).find('a').each((_, a) => {
-          const href = $(a).attr('href') || '';
-          if (href.startsWith('http')) {
-            if (href.includes('scholarshiproar.com')) roarUrl = href;
-            else officialUrl = href;
-          }
-        });
-
-        // Check next siblings for links
-        if (!officialUrl) {
-          $(el).nextAll().slice(0, 3).each((_, sib) => {
-            if (officialUrl) return;
-            $(sib).find('a').each((_, a) => {
-              if (officialUrl) return;
-              const href = $(a).attr('href') || '';
-              if (href.startsWith('http') && !href.includes('scholarshiproar.com')) {
-                officialUrl = href;
-              }
-            });
-          });
-        }
-
-        const finalUrl = officialUrl || roarUrl;
-        if (finalUrl && h3Text) {
-          allResults.push({
-            title: h3Text,
-            description: `Scholarship: ${h3Text}`,
-            url: finalUrl,
-            source: section,
-          });
-          found++;
-        }
-      });
-
-      // Also extract from list items
-      $('li').each((_, el) => {
-        const text = $(el).text().trim().split('\n')[0].trim();
-        if (text.length < 15 || text.length > 200) return;
-        if (!text.toLowerCase().includes('scholarship') && !text.toLowerCase().includes('funded') && !text.toLowerCase().includes('fellowship')) return;
-
-        const link = $(el).find('a').first().attr('href') || '';
-        if (link.startsWith('http') && !link.includes('scholarshiproar.com')) {
-          allResults.push({ title: text, description: text, url: link, source: section + '-list' });
-          found++;
-        }
-      });
-
-      debug.push(`   ✅ Found ${found} scholarships`);
-    } catch (e: any) {
-      debug.push(`   ❌ Failed: ${(e.message || '').substring(0, 80)}`);
     }
-    await new Promise(resolve => setTimeout(resolve, 1500));
-  }
-
-  // Source 2: Bing search
-  try {
-    debug.push('🔍 Searching Bing...');
-    const r = await axios.get('https://www.bing.com/search', {
-      params: { q: '"fully funded" "scholarship" "2026" OR "2027" "apply now" international students', count: 15 },
-      headers: HEADERS,
-      timeout: 15000,
-    });
-    const $ = cheerio.load(r.data);
-    let bingCount = 0;
-    $('li.b_algo').each((_, el) => {
-      const title = $(el).find('h2 a').text().trim();
-      const url = $(el).find('h2 a').attr('href');
-      const snippet = $(el).find('.b_caption p, .b_algoSlug').text().trim();
-      if (title && url && !url.startsWith('https://www.bing.com') && !url.includes('bing.com/ck')) {
-        allResults.push({ title: title.substring(0, 150), description: snippet.substring(0, 300), url, source: 'Bing' });
-        bingCount++;
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_internet",
+      description: "Search Google to find new scholarship opportunities.",
+      parameters: {
+        type: "object",
+        properties: { query: { type: "string" } },
+        required: ["query"]
       }
-    });
-    debug.push(`   ✅ Found ${bingCount} Bing results`);
-  } catch (e: any) {
-    debug.push(`   ❌ Bing failed: ${(e.message || '').substring(0, 80)}`);
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "scrape_page",
+      description: "Fetch the text content of a webpage to read scholarship details.",
+      parameters: {
+        type: "object",
+        properties: { url: { type: "string" } },
+        required: ["url"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "submit_new_scholarships",
+      description: "Submit the final list of new, fully funded scholarships that are NOT in the database.",
+      parameters: {
+        type: "object",
+        properties: {
+          scholarships: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                titleEn: { type: "string" },
+                titleAr: { type: "string" },
+                descriptionEn: { type: "string" },
+                descriptionAr: { type: "string" },
+                countryEn: { type: "string" },
+                countryAr: { type: "string" },
+                universityEn: { type: "string" },
+                universityAr: { type: "string" },
+                degree: { type: "string", enum: ["Bachelor", "Master", "PhD", "Other"] },
+                fundingType: { type: "string", enum: ["Fully Funded", "Partially Funded"] },
+                majors: { type: "array", items: { type: "string" } },
+                deadline: { type: "string", description: "YYYY-MM-DD or empty if unknown" },
+                link: { type: "string", description: "Official application URL" },
+                keywords: { type: "array", items: { type: "string" } }
+              },
+              required: ["titleEn", "countryEn", "universityEn", "degree", "fundingType", "link"]
+            }
+          }
+        },
+        required: ["scholarships"]
+      }
+    }
   }
-
-  // Deduplicate by URL
-  const seen = new Set<string>();
-  const unique = allResults.filter(r => { if (seen.has(r.url)) return false; seen.add(r.url); return true; });
-  debug.push(`📊 Total unique results: ${unique.length}`);
-  return { results: unique, debug };
-}
-
-// ── Step 2: AI evaluates and extracts structured scholarship data ──────────────
-async function evaluateScholarshipsWithAI(
-  rawResults: any[],
-  existingTitlesSet: Set<string>
-): Promise<{ scholarships: any[]; debug: string }> {
-  if (rawResults.length === 0) return { scholarships: [], debug: 'No raw results to evaluate' };
-
-  const prompt = `You are an expert scholarship researcher. Analyze these scholarship results and extract structured data.
-
-FOR EACH SCHOLARSHIP, EXTRACT JSON:
-{
-  "titleEn": "English title",
-  "titleAr": "Arabic translation",
-  "descriptionEn": "2-3 sentences",
-  "descriptionAr": "Arabic translation",
-  "countryEn": "Country",
-  "countryAr": "Arabic country",
-  "universityEn": "University/org",
-  "universityAr": "Arabic translation",
-  "degree": "Bachelor"|"Master"|"PhD"|"Other",
-  "fundingType": "Fully Funded"|"Partially Funded",
-  "majors": ["fields"],
-  "deadline": "2026-12-31",
-  "link": "application URL",
-  "keywords": ["k1","k2","k3"],
-  "isValid": true
-}
-
-RULES:
-- ONLY real, currently open scholarships
-- Valid URL required for link
-- If deadline unknown, use 6 months from now
-- Skip duplicates (check EXISTING IN DB list)
-- If a title in the data already exists in our DB, set isValid: false
-- Return JSON array. If none valid, return []
-
-RESULTS:
-${JSON.stringify(rawResults.slice(0, 20), null, 2)}
-
-EXISTING IN DB (do NOT duplicate):
-${JSON.stringify([...existingTitlesSet].slice(0, 30))}
-
-Return ONLY valid JSON array.`;
-
-  try {
-    const response = await callAI([{ role: 'user', content: prompt }], 4000);
-    let cleaned = response.trim();
-    if (cleaned.startsWith('```')) cleaned = cleaned.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-    const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
-    if (jsonMatch) cleaned = jsonMatch[0];
-
-    const parsed = JSON.parse(cleaned);
-    if (!Array.isArray(parsed)) return { scholarships: [], debug: 'AI response was not an array' };
-
-    const valid = parsed.filter((s: any) => {
-      if (!s.isValid) return false;
-      if (!s.titleEn || !s.link) return false;
-      if (existingTitlesSet.has(s.titleEn.toLowerCase())) return false;
-      try { new URL(s.link); } catch { return false; }
-      return true;
-    });
-
-    return { scholarships: valid, debug: `AI: ${rawResults.length} raw → ${parsed.length} extracted → ${valid.length} valid` };
-  } catch (err: any) {
-    const errMsg = err.response?.data?.error?.message || err.message || 'Unknown';
-    console.error('[Hunter] AI failed:', errMsg);
-    return { scholarships: [], debug: `AI Error: ${errMsg.substring(0, 200)}` };
-  }
-}
+];
 
 // ── Generate promotional content ───────────────────────────────────────────────
 export async function generatePromotionalContent(scholarship: any): Promise<{ arabic: string; english: string }> {
@@ -377,12 +236,12 @@ export async function saveAcceptedScholarship(data: any): Promise<any> {
   return scholarship;
 }
 
-// ── Main Hunt ──────────────────────────────────────────────────────────────────
+// ── Main Hunt (Agentic Loop) ───────────────────────────────────────────────────
 export async function runScholarshipHunt(): Promise<void> {
-  console.log('[Hunter] Starting...');
+  console.log('[Hunter Agent] Starting...');
   const debugLines: string[] = [];
   const startTime = Date.now();
-  const log = (msg: string) => { debugLines.push(msg); console.log(`[Hunter] ${msg}`); };
+  const log = (msg: string) => { debugLines.push(msg); console.log(`[Hunter Agent] ${msg}`); };
 
   try {
     const settings = await BotSettings.getSettings();
@@ -390,38 +249,142 @@ export async function runScholarshipHunt(): Promise<void> {
 
     const chatId = getHunterChatId(settings.hunterChatId);
 
-    log('━━━ STEP 1: Scraping ━━━');
-    const { results: rawResults, debug: scrapeDebug } = await scrapeScholarshipSites();
-    debugLines.push(...scrapeDebug);
-    log(`📊 Raw: ${rawResults.length}`);
+    log('━━━ Initiating AI Agent ━━━');
+    
+    // Pick one search query from settings to guide the AI
+    const randomQuery = settings.searchQueries && settings.searchQueries.length > 0
+      ? settings.searchQueries[Math.floor(Math.random() * settings.searchQueries.length)]
+      : '"fully funded" scholarship 2026';
 
-    if (rawResults.length === 0) {
-      log('❌ No results');
-      if (chatId) {
-        await sendTelegramMessage(chatId, [
-          '🔍 <b>نتيجة البحث اليومية</b>', '', '❌ <b>لم يتم العثور على نتائج</b>', '',
-          '📝 <b>تفاصيل:</b>', ...debugLines.map(l => `  ${l}`), '',
-          `⏱️ ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
-        ].join('\n'));
+    const systemPrompt = `You are an elite automated scholarship hunter for ScholarNest.
+Your task is to find 2-4 NEW, high-quality (preferably Fully Funded) scholarships.
+
+GUIDELINES:
+1. You MUST check the local database FIRST using search_database to avoid duplicating existing scholarships.
+2. Use search_internet to look for new opportunities based on this topic: "${randomQuery}".
+3. Use scrape_page to read the details of promising URLs.
+4. DO NOT include scholarships that are already in the database.
+5. Once you have found the new scholarships and confirmed they are not duplicates, call submit_new_scholarships with the structured JSON data.
+
+Work methodically. You have a maximum of 15 tool calls.`;
+
+    let messages: any[] = [{ role: 'system', content: systemPrompt }];
+    const groq = getGroqClient();
+    let finalScholarships: any[] = [];
+    let loopCount = 0;
+    
+    while (loopCount < 15) {
+      loopCount++;
+      log(`🔄 Agent Step ${loopCount}...`);
+      
+      let aiMessage: any;
+      try {
+        const orResponse = await axios.post(
+          OPENROUTER_API_URL,
+          {
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
+            messages: messages,
+            temperature: 0.2,
+            tools: tools,
+            tool_choice: 'auto',
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://scholarnest.com',
+              'X-Title': 'ScholarNest Hunter',
+            },
+            timeout: 60000,
+          }
+        );
+        aiMessage = orResponse.data.choices[0]?.message;
+      } catch (err: any) {
+        log(`⚠️ OpenRouter failed: ${err.message}. Trying Groq...`);
+        const groqResponse = await groq.chat.completions.create({
+          model: 'llama-3.1-8b-instant',
+          messages: messages,
+          temperature: 0.2,
+          tools: tools as any,
+          tool_choice: "auto",
+          max_tokens: 4000
+        });
+        aiMessage = groqResponse.choices[0]?.message;
       }
-      return;
+      if (!aiMessage) throw new Error("No response from AI");
+      
+      messages.push(aiMessage);
+
+      if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+        let submissionReceived = false;
+
+        for (const toolCall of aiMessage.tool_calls) {
+          const fnName = toolCall.function.name;
+          let args: any = {};
+          try { args = JSON.parse(toolCall.function.arguments); } catch(e) {}
+          
+          let toolResult = "";
+          log(`🛠️ Tool: ${fnName}(${JSON.stringify(args).substring(0, 50)})`);
+
+          try {
+            if (fnName === 'search_database') {
+              const q = args.query || '';
+              const results = await Scholarship.find(
+                { $or: [{ 'title.en': { $regex: q, $options: 'i' } }, { 'university.en': { $regex: q, $options: 'i' } }] }
+              ).limit(5).select('title university country link');
+              toolResult = results.length > 0 ? JSON.stringify(results) : "No matching scholarships found in database.";
+            } 
+            else if (fnName === 'search_internet') {
+              const res = await google.search(args.query, { page: 0, safe: false, parse_ads: false });
+              toolResult = JSON.stringify(res.results.slice(0, 5).map(r => ({ title: r.title, url: r.url, snippet: r.description })));
+            }
+            else if (fnName === 'scrape_page') {
+              const r = await axios.get(args.url, { headers: HEADERS, timeout: 10000 });
+              const $ = cheerio.load(r.data);
+              toolResult = $('body').text().replace(/\s+/g, ' ').substring(0, 3000); // Truncate to save tokens
+            }
+            else if (fnName === 'submit_new_scholarships') {
+              finalScholarships = args.scholarships || [];
+              toolResult = "Successfully submitted. Terminating.";
+              submissionReceived = true;
+            }
+            else {
+              toolResult = "Unknown tool.";
+            }
+          } catch (e: any) {
+             toolResult = `Error executing tool: ${e.message}`;
+             log(`⚠️ Tool Error: ${e.message}`);
+          }
+
+          messages.push({ role: "tool", tool_call_id: toolCall.id, name: fnName, content: toolResult });
+        }
+
+        if (submissionReceived) {
+          log('✅ Agent submitted scholarships. Exiting loop.');
+          break; 
+        }
+      } else {
+        log(`💬 AI: ${aiMessage.content?.substring(0, 100)}`);
+        messages.push({ role: 'user', content: 'Please use the submit_new_scholarships tool to output the final results, or use other tools to continue searching.' });
+      }
     }
 
-    log('━━━ STEP 2: AI Evaluation ━━━');
-    const existingTitles = await Scholarship.find({}, 'title.en').lean();
-    const existingTitlesSet = new Set(existingTitles.map((s: any) => s.title.en?.toLowerCase()));
-    log(`📚 DB: ${existingTitlesSet.size}`);
+    log('━━━ STEP 3: Verification & Telegram ━━━');
+    
+    // Filter out any that slipped through
+    const uniqueScholarships = [];
+    for(const s of finalScholarships) {
+      const exists = await Scholarship.exists({ 'title.en': s.titleEn });
+      if(!exists) { uniqueScholarships.push(s); }
+      else { log(`🗑️ Filtered duplicate: ${s.titleEn}`); }
+    }
 
-    const { scholarships: evaluated, debug: aiDebug } = await evaluateScholarshipsWithAI(rawResults, existingTitlesSet);
-    log(aiDebug);
-    log(`✅ Valid: ${evaluated.length}`);
-
-    log('━━━ STEP 3: Telegram ━━━');
-    await sendDiscoveredScholarshipsToTelegram(evaluated, chatId);
+    log(`✅ Final Valid: ${uniqueScholarships.length}`);
+    await sendDiscoveredScholarshipsToTelegram(uniqueScholarships, chatId);
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    if (evaluated.length > 0) {
-      log(`🎉 Found ${evaluated.length} scholarships!`);
+    if (uniqueScholarships.length > 0) {
+      log(`🎉 Found ${uniqueScholarships.length} scholarships!`);
     } else {
       if (chatId) {
         await sendTelegramMessage(chatId, [
@@ -431,6 +394,7 @@ export async function runScholarshipHunt(): Promise<void> {
       }
     }
     log(`⏱️ Total: ${elapsed}s`);
+
   } catch (error: any) {
     const errMsg = error.response?.data?.error?.message || error.message || 'Unknown';
     log(`💥 ERROR: ${errMsg}`);
@@ -438,8 +402,8 @@ export async function runScholarshipHunt(): Promise<void> {
     const chatId = getHunterChatId(settings?.hunterChatId);
     if (chatId) {
       await sendTelegramMessage(chatId, [
-        '⚠️ <b>خطأ</b>', '', `💥 ${escapeHtml(errMsg)}`, '',
-        ...debugLines.map(l => `  ${l}`), '',
+        '⚠️ <b>خطأ في الوكيل الذكي (Agent)</b>', '', `💥 ${escapeHtml(errMsg)}`, '',
+        ...debugLines.slice(-10).map(l => `  ${l}`), '',
         `⏱️ ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
       ].join('\n'));
     }
