@@ -1,9 +1,4 @@
 {
   "name": "scholarnest",
-  "private": true,
-  "scripts": {
-    "install": "cd frontend && npm install",
-    "build": "cd frontend && npm run build",
-    "dev": "cd frontend && npm run dev"
-  }
+  "private": true
 }
