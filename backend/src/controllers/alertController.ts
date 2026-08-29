@@ -64,7 +64,7 @@ export const deleteAlert = async (req: AuthRequest, res: Response): Promise<void
 // Helper: Create an alert
 export const createAlert = async (
   userId: string,
-  type: string,
+  type: 'deadline_1day' | 'deadline_3days' | 'deadline_7days' | 'new_scholarship' | 'status_change',
   title: { en: string; ar: string },
   message: { en: string; ar: string },
   link?: string

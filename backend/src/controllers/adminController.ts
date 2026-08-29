@@ -181,7 +181,7 @@ export const exportUsers = async (req: AuthRequest, res: Response): Promise<void
 
     const csv = [
       'Name,Email,Role,Country,Major,Created At',
-      ...users.map(u =>
+      ...users.map((u: any) =>
         `"${u.name}","${u.email}","${u.role}","${u.country || ''}","${u.major || ''}","${u.createdAt}"`
       ),
     ].join('\n');

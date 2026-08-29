@@ -54,7 +54,7 @@ export const toggleSave = async (req: AuthRequest, res: Response): Promise<void>
     } else {
       const app = await Application.create({
         user: userId,
-        scholarship: scholarshipId,
+        scholarship: scholarshipId as string,
         status: 'saved',
         timeline: [{ status: 'saved', date: new Date(), note: 'Scholarship saved' }],
       });

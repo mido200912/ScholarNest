@@ -263,8 +263,8 @@ export const bulkCreateScholarships = async (req: AuthRequest, res: Response): P
         partial: true,
         count: error.insertedCount,
         failedCount: error.writeErrors?.length ?? 0,
-        total: docs.length,
-        message: `${error.insertedCount} of ${docs.length} scholarships imported. ${error.writeErrors?.length ?? 0} failed.`,
+        total: (req.body.scholarships || []).length,
+        message: `${error.insertedCount} of ${(req.body.scholarships || []).length} scholarships imported. ${error.writeErrors?.length ?? 0} failed.`,
         details: failedDetails,
       });
       return;

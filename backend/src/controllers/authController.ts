@@ -41,7 +41,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         gpa: user.gpa,
         englishLevel: user.englishLevel,
         targetCountries: user.targetCountries,
-        token: generateToken(user._id as string),
+        token: generateToken(user._id.toString()),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -68,7 +68,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         gpa: user.gpa,
         englishLevel: user.englishLevel,
         targetCountries: user.targetCountries,
-        token: generateToken(user._id as string),
+        token: generateToken(user._id.toString()),
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -141,7 +141,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
           gpa: updatedUser.gpa,
           englishLevel: updatedUser.englishLevel,
           targetCountries: updatedUser.targetCountries,
-          token: generateToken(updatedUser._id as string),
+          token: generateToken(updatedUser._id.toString()),
         }
       });
     } else {

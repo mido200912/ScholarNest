@@ -22,11 +22,11 @@ export const addComment = async (req: AuthRequest, res: Response) => {
 
     const comment = await Comment.create({
       user: req.user?._id,
-      scholarship: scholarshipId,
+      scholarship: scholarshipId as string,
       text: text.trim(),
     });
 
-    const populatedComment = await comment.populate('user', 'name role');
+    const populatedComment = await comment?.populate('user', 'name role');
 
     res.status(201).json({ success: true, data: populatedComment });
   } catch (error: any) {
