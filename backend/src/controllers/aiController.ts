@@ -4,14 +4,6 @@ import { Scholarship } from '../models/Scholarship';
 import { AuthRequest } from '../middleware/auth';
 import Groq from 'groq-sdk';
 
-// Safely import googlethis (may not be available on all platforms)
-let googleSearch: any = null;
-try {
-  googleSearch = require('googlethis');
-} catch {
-  console.warn('[AI] googlethis not available, internet search will be disabled');
-}
-
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -19,15 +11,15 @@ const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // ── Model Config ──────────────────────────────────────────────────────────────
 const GROQ_MODELS = {
-  chat: 'llama-3.3-70b-versatile',  // Better tool support
+  chat: 'llama-3.3-70b-versatile',
   interview: 'llama-3.1-8b-instant',
   coverLetter: 'llama-3.1-8b-instant',
 };
 
 const OPENROUTER_MODELS = {
-  chat: 'nvidia/nemotron-3-ultra-550b-a55b:free',
-  interview: 'nvidia/nemotron-3-ultra-550b-a55b:free',
-  coverLetter: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  chat: 'meta-llama/llama-3.1-8b-instruct:free',
+  interview: 'meta-llama/llama-3.1-8b-instruct:free',
+  coverLetter: 'meta-llama/llama-3.1-8b-instruct:free',
 };
 
 // ── Helper: Call OpenRouter ───────────────────────────────────────────────────
@@ -44,13 +36,15 @@ async function callOpenRouter(messages: any[], model: string, maxTokens = 1000):
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://scholarnest.com',
+        'HTTP-Referer': 'https://scholarnest.up.railway.app',
         'X-Title': 'ScholarNest AI',
       },
       timeout: 60000,
     }
   );
-  return response.data.choices[0]?.message?.content || '';
+  const content = response.data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('OpenRouter returned empty response');
+  return content;
 }
 
 // ── Helper: Call Groq ────────────────────────────────────────────────────────
@@ -62,95 +56,122 @@ async function callGroq(messages: any[], model: string, maxTokens = 1000): Promi
     temperature: 0.7,
     max_tokens: maxTokens,
   });
-  return response.choices[0]?.message?.content || '';
+  const content = response.choices[0]?.message?.content;
+  if (!content) throw new Error('Groq returned empty response');
+  return content;
 }
 
-// ── Helper: Try Groq first, fallback to OpenRouter ───────────────────────────
+// ── Helper: OpenRouter first, fallback to Groq ───────────────────────────────
 async function callAI(messages: any[], purpose: 'chat' | 'interview' | 'coverLetter', maxTokens = 1000): Promise<string> {
-  // Try Groq first (faster)
-  try {
-    const result = await callGroq(messages, GROQ_MODELS[purpose], maxTokens);
-    if (result) return result;
-  } catch (err: any) {
-    const groqError = err.response?.data?.error?.message || err.message || 'Unknown error';
-    console.log(`[Groq FAIL] ${purpose}: ${groqError}`);
-  }
-
-  // Fallback to OpenRouter (more powerful)
+  // Try OpenRouter first
   try {
     const result = await callOpenRouter(messages, OPENROUTER_MODELS[purpose], maxTokens);
     if (result) return result;
   } catch (err: any) {
-    const orError = err.response?.data?.error?.message || err.message || 'Unknown error';
-    console.log(`[OpenRouter FAIL] ${purpose}: ${orError}`);
+    const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 200) : err.message;
+    console.warn(`[AI] OpenRouter FAIL (${purpose}): ${detail}`);
   }
 
-  throw new Error('Both AI providers are unavailable. Please try again later.');
+  // Fallback to Groq
+  try {
+    const result = await callGroq(messages, GROQ_MODELS[purpose], maxTokens);
+    if (result) return result;
+  } catch (err: any) {
+    const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 200) : err.message;
+    console.warn(`[AI] Groq FAIL (${purpose}): ${detail}`);
+  }
+
+  throw new Error('Both AI providers (OpenRouter + Groq) are currently unavailable.');
 }
 
-// Define available tools (functions the AI can call)
+// ── Local DB search helper ────────────────────────────────────────────────────
+async function searchLocalScholarships(query: string) {
+  try {
+    const regex = new RegExp(query, 'i');
+    const results = await Scholarship.find({
+      status: 'approved',
+      $or: [
+        { 'title.en': regex },
+        { 'title.ar': regex },
+        { 'country.en': regex },
+        { 'university.en': regex },
+        { keywords: regex },
+        { degree: regex },
+        { fundingType: regex },
+      ]
+    }).limit(5).select('title university country degree fundingType deadline link');
+
+    if (results.length === 0) return 'No scholarships found in local database for that query.';
+    return JSON.stringify(results.map(s => ({
+      title: s.title?.en,
+      university: s.university?.en,
+      country: s.country?.en,
+      degree: s.degree,
+      fundingType: s.fundingType,
+      deadline: s.deadline,
+      link: s.link
+    })));
+  } catch (err: any) {
+    console.error('[AI] DB search error:', err.message);
+    return 'Database search failed.';
+  }
+}
+
+// Define available tools
 const tools = [
   {
     type: "function",
     function: {
       name: "search_local_scholarships",
-      description: "Search the ScholarNest database for scholarships. Use this to find scholarships hosted on our platform.",
+      description: "Search the ScholarNest database for scholarships by keyword, country, degree, university, or funding type.",
       parameters: {
         type: "object",
         properties: {
-          searchQuery: { 
-            type: "string", 
-            description: "The search query, like 'Computer Science UK' or 'Fully Funded'" 
+          searchQuery: {
+            type: "string",
+            description: "Search term like 'Computer Science UK', 'Fully Funded PhD', 'Germany Masters'"
           }
         },
         required: ["searchQuery"]
       }
     }
-  },
-  {
-    type: "function",
-    function: {
-      name: "search_internet",
-      description: "Search the real internet for external scholarships or general information. Use this if you cannot find what the user needs in the local database, or if they ask for external resources.",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { 
-            type: "string", 
-            description: "The Google search query" 
-          }
-        },
-        required: ["query"]
-      }
-    }
   }
 ];
 
+// ── Main Chat Handler ─────────────────────────────────────────────────────────
+// @desc    Chat with AI
+// @route   POST /api/ai/chat
+// @access  Public
 export const chatWithAI = async (req: Request, res: Response): Promise<void> => {
   try {
     const { messages } = req.body;
-    
+
+    if (!messages || !Array.isArray(messages)) {
+      res.status(400).json({ success: false, message: 'messages array is required' });
+      return;
+    }
+
     const systemPrompt = {
       role: 'system',
       content: `You are an expert scholarship advisor for ScholarNest. 
       You help students find scholarships, write motivation letters, and answer questions.
       Always be professional, concise, and encouraging.
       You can understand and reply in both Arabic and English.
-      If the user is asking for scholarships, use the available tools to search for them.`
+      If the user is asking for scholarships, use the search_local_scholarships tool to find them.`
     };
 
-    const availableTools = tools; // Always provide all tools
-    let currentMessages = [systemPrompt, ...messages];
-
-    // Try Groq with tool support first
+    let currentMessages: any[] = [systemPrompt, ...messages];
     let aiMessage: any = null;
+
+    // ── Try Groq with tool support ──────────────────────────────────────────
     try {
       const payload = {
         model: GROQ_MODELS.chat,
         messages: currentMessages,
         temperature: 0.7,
-        tools: availableTools,
-        tool_choice: "auto"
+        tools,
+        tool_choice: "auto",
+        max_tokens: 1000,
       };
 
       let response = await axios.post(GROQ_API_URL, payload, {
@@ -161,64 +182,52 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
         timeout: 30000
       });
 
-      aiMessage = response.data.choices[0].message;
+      aiMessage = response.data.choices?.[0]?.message;
 
-      if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
+      // Handle tool calls
+      if (aiMessage?.tool_calls && aiMessage.tool_calls.length > 0) {
         currentMessages.push(aiMessage);
 
         for (const toolCall of aiMessage.tool_calls) {
-          const functionName = toolCall.function.name;
-          const args = JSON.parse(toolCall.function.arguments);
-          let toolResult = "";
-
-          if (functionName === 'search_local_scholarships') {
-            const queryObj = args.searchQuery ? { $text: { $search: args.searchQuery } } : {};
-            const results = await Scholarship.find(queryObj).limit(3);
-            toolResult = results.length > 0
-              ? JSON.stringify(results.map(s => ({ title: s.title, university: s.university, country: s.country, degree: s.degree, link: s.link })))
-              : "No local scholarships found.";
-          } else if (functionName === 'search_internet') {
-            try {
-              if (!googleSearch) {
-                toolResult = "Internet search is not available. Please search manually.";
-              } else {
-                const searchResults = await googleSearch.search(args.query, { page: 0, safe: false, parse_ads: false });
-                toolResult = JSON.stringify(searchResults.results.slice(0, 3).map((r: any) => ({ title: r.title, description: r.description, url: r.url })));
-              }
-            } catch (searchErr: any) {
-              console.error('[AI] Internet search error:', searchErr.message);
-              toolResult = "Failed to search the internet.";
-            }
-          }
-
-          currentMessages.push({ role: "tool", tool_call_id: toolCall.id, name: functionName, content: toolResult });
+          const args = JSON.parse(toolCall.function.arguments || '{}');
+          const toolResult = await searchLocalScholarships(args.searchQuery || '');
+          currentMessages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            name: toolCall.function.name,
+            content: toolResult
+          });
         }
 
         response = await axios.post(GROQ_API_URL, {
           model: GROQ_MODELS.chat,
           messages: currentMessages,
-          temperature: 0.7
+          temperature: 0.7,
+          max_tokens: 1000,
         }, {
           headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
           timeout: 30000
         });
 
-        aiMessage = response.data.choices[0].message;
+        aiMessage = response.data.choices?.[0]?.message;
       }
+
+      if (!aiMessage?.content) throw new Error('Empty response from Groq');
     } catch (err: any) {
       const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 300) : err.message;
-      console.error('[AI] Groq chat failed, trying OpenRouter:', detail);
+      console.warn('[AI] Groq tool-chat failed, trying OpenRouter simple chat:', detail);
       aiMessage = null;
     }
 
-    // Fallback to OpenRouter (no tool calling, just chat)
-    if (!aiMessage || !aiMessage.content) {
+    // ── Fallback: OpenRouter simple chat (no tools) ──────────────────────────
+    if (!aiMessage?.content) {
       try {
-        const result = await callOpenRouter(currentMessages, OPENROUTER_MODELS.chat, 1000);
-        aiMessage = { role: 'assistant', content: result };
+        const content = await callOpenRouter(currentMessages.filter(m => m.role !== 'tool'), OPENROUTER_MODELS.chat, 1000);
+        aiMessage = { role: 'assistant', content };
       } catch (err: any) {
-        console.log('OpenRouter chat also failed:', err.message?.substring(0, 100));
-        throw new Error('Both AI providers are unavailable');
+        const detail = err.response?.data ? JSON.stringify(err.response.data).substring(0, 300) : err.message;
+        console.error('[AI] OpenRouter simple chat also failed:', detail);
+        throw new Error(`All AI providers failed. Last error: ${detail}`);
       }
     }
 
@@ -226,8 +235,8 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
 
   } catch (error: any) {
     const detail = error.response?.data ? JSON.stringify(error.response.data).substring(0, 300) : error.message;
-    console.error('[AI] chatWithAI Error:', detail);
-    res.status(500).json({ success: false, message: `AI Assistant error: ${detail || 'unknown'}` });
+    console.error('[AI] chatWithAI fatal error:', detail);
+    res.status(500).json({ success: false, message: `AI Assistant error: ${detail || 'Unknown error'}` });
   }
 };
 
@@ -237,45 +246,35 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
 export const generateCoverLetter = async (req: AuthRequest, res: Response) => {
   try {
     const { scholarshipId } = req.body;
-    
+
     const scholarship = await Scholarship.findById(scholarshipId);
     if (!scholarship) return res.status(404).json({ success: false, message: 'Scholarship not found' });
 
     const user = req.user;
     if (!user) return res.status(401).json({ success: false, message: 'Not authorized' });
 
-    const prompt = `
-      You are an expert scholarship advisor. Write a highly persuasive and professional Cover Letter / Statement of Purpose for the following student applying to this scholarship.
+    const prompt = `You are an expert scholarship advisor. Write a persuasive Cover Letter for this student applying to this scholarship.
       
-      Student Profile:
-      - Name: ${user.name}
-      - Major: ${user.major || 'Not specified'}
-      - GPA: ${user.gpa || 'Not specified'}
-      - English Level: ${user.englishLevel || 'Not specified'}
+      Student: ${user.name} | Major: ${user.major || 'Not specified'} | GPA: ${user.gpa || 'Not specified'} | English: ${user.englishLevel || 'Not specified'}
       
-      Scholarship Details:
-      - Title: ${scholarship.title}
-      - University: ${scholarship.university}
-      - Country: ${scholarship.country}
-      - Degree: ${scholarship.degree}
-      - Description: ${scholarship.description}
+      Scholarship: ${scholarship.title?.en} at ${scholarship.university?.en}, ${scholarship.country?.en} (${scholarship.degree})
+      Description: ${scholarship.description?.en}
 
-      Instructions:
-      - Write in English.
-      - Keep it professional, structured, and impactful (around 300-400 words).
-      - Do not use placeholders like [Insert Date] - make it read like a final draft ready to send.
-      - Highlight how the student's background aligns with the scholarship's goals.
-    `;
+      Write a final, professional 300-400 word cover letter. No placeholders.`;
 
     const coverLetter = await callAI([{ role: 'user', content: prompt }], 'coverLetter', 1500);
 
     res.json({ success: true, data: coverLetter });
   } catch (error: any) {
-    console.error('AI Cover Letter Error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to generate cover letter.' });
+    const detail = error.response?.data ? JSON.stringify(error.response.data).substring(0, 200) : error.message;
+    console.error('[AI] Cover Letter Error:', detail);
+    res.status(500).json({ success: false, error: `Failed to generate cover letter: ${detail}` });
   }
 };
 
+// @desc    Mock interview chat
+// @route   POST /api/ai/interview
+// @access  Private
 export const chatInterview = async (req: Request, res: Response): Promise<void> => {
   try {
     const { scholarship, history } = req.body;
@@ -284,21 +283,9 @@ export const chatInterview = async (req: Request, res: Response): Promise<void> 
     const messages = [
       {
         role: 'system',
-        content: `You are a professional scholarship interviewer for the following scholarship: 
-        Title: ${scholarship.title.en}
-        University: ${scholarship.university.en}
-        
-        The candidate's profile:
-        Name: ${user.name}
-        Major: ${user.major || 'Not specified'}
-        Target Degree: ${scholarship.degree}
-
-        Your job is to conduct a mock interview. 
-        - Ask ONE question at a time.
-        - After the user answers, give brief constructive feedback on their answer (what was good, how to improve).
-        - Then, seamlessly ask the next question.
-        - Keep your feedback encouraging but professional.
-        - Do not overwhelm the user with long text. Keep it conversational.`
+        content: `You are a professional scholarship interviewer for: "${scholarship?.title?.en}" at ${scholarship?.university?.en}.
+        Candidate: ${user?.name || 'Student'}, Major: ${user?.major || 'Not specified'}.
+        Ask ONE question at a time. Give brief constructive feedback on each answer, then ask the next question.`
       },
       ...history
     ];
@@ -307,7 +294,8 @@ export const chatInterview = async (req: Request, res: Response): Promise<void> 
 
     res.json({ success: true, data: reply });
   } catch (error: any) {
-    console.error('AI Interview Error:', error.message);
-    res.status(500).json({ success: false, error: error.message || 'AI model is currently unavailable. Please try again later.' });
+    const detail = error.response?.data ? JSON.stringify(error.response.data).substring(0, 200) : error.message;
+    console.error('[AI] Interview Error:', detail);
+    res.status(500).json({ success: false, error: `Interview AI error: ${detail}` });
   }
 };
