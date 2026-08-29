@@ -18,9 +18,11 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production'
-      ? ['https://scholar-nest-v1.vercel.app', 'https://scholarnest.up.railway.app']
-      : 'http://localhost:5173',
+    origin: [
+      'https://scholar-nest-v1.vercel.app',
+      'https://scholarnest.up.railway.app',
+      'http://localhost:5173'
+    ],
     credentials: true,
   })
 );
