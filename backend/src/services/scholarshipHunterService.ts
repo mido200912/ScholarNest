@@ -177,8 +177,7 @@ export async function sendDiscoveredScholarshipsToTelegram(scholarships: any[], 
   if (!chatId) return;
 
   if (scholarships.length === 0) {
-    await sendTelegramMessage(chatId, '🔍 <b>نتيجة البحث اليومية</b>\n\nلم يتم العثور على منح جديدة اليوم.');
-    return;
+    return; // Let the caller handle the empty message
   }
 
   await sendTelegramMessage(chatId, [
