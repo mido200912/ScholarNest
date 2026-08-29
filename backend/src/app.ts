@@ -47,9 +47,13 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/quests', questRoutes);
 
-// Basic Health Check Route
+// Basic Health Check Routes
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'ScholarNest API is running normally.' });
+});
+
+app.get('/', (req, res) => {
+  res.status(200).send('Welcome to ScholarNest API. The frontend is hosted separately.');
 });
 
 export default app;
