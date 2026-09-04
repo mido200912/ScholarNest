@@ -161,11 +161,13 @@ CRITICAL RULES:
 2. AUTHENTIC DATA:
    - Only return genuine, verified scholarship programs from accredited universities or official governments (e.g. DAAD, Chevening, Fulbright, Turkiye Burslari, Eiffel Excellence, Swiss Government Excellence, MEXT Japan, Stipendium Hungaricum, KAUST Fellowship, Gates Cambridge, etc.).
    - The 'link' MUST be the genuine official application or university portal URL.
-3. IMAGES & VISUALS:
-   - Call the 'search_images' tool with the university name (e.g. 'Oxford University campus') to retrieve authentic direct image URLs.
-   - Supply a direct valid image URL from search_images in the 'image' field.
+3. IMAGES & CAMPUS PHOTOS:
+   - Provide an authentic direct photo URL for the university campus in the 'image' field (you may call 'search_images' with the university name or let the system resolve it).
 4. ARABIC TRANSLATION:
    - Provide accurate, fluent Arabic translations for titleAr, descriptionAr, countryAr, and universityAr.
+5. STRICT OUTPUT FORMAT:
+   - Output ONLY a valid raw JSON array starting with '[' and ending with ']'.
+   - NEVER output any preamble, introductory text, conversational reasoning, or thinking process like "Here's a thinking process:".
 
 Return ONLY a valid JSON array matching this exact schema:
 [{
@@ -204,7 +206,7 @@ Return ONLY the JSON array when you are finished.`;
       if (isLastLoop) {
         messages.push({
           role: 'user',
-          content: 'You have gathered sufficient scholarship data. Now output ONLY the final JSON array matching the schema without calling any more tools.'
+          content: 'You have gathered sufficient scholarship data. Now output ONLY the final JSON array matching the schema without calling any more tools. Start immediately with "[" and end with "]". Do NOT write any thinking process or preamble.'
         });
       }
 
@@ -241,7 +243,7 @@ Return ONLY the JSON array when you are finished.`;
       log('[Agent] ⚡ Requesting final JSON array compilation from gathered data...');
       messages.push({
         role: 'user',
-        content: 'Compile all the gathered scholarships above into the final JSON array right now. Return ONLY the valid JSON array.'
+        content: 'Compile all the gathered scholarships above into the final JSON array right now. Output ONLY valid JSON starting immediately with "[" and ending with "]". Do NOT write any preamble or conversational text.'
       });
       const synthesisResponse = await callAgentWithTools(messages);
       finalJson = synthesisResponse.content || synthesisResponse.reasoning || '';
@@ -760,11 +762,19 @@ function extractJsonArray(text: string): any[] | null {
   let cleaned = text.trim();
   // Strip <think>...</think>
   cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-  // Strip markdown fences
-  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
   let rawList: any[] | null = null;
 
+  // 1. Extract from markdown code fences anywhere in text
+  const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenceMatch) {
+    try {
+      const parsed = JSON.parse(fenceMatch[1].trim());
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+
+  // 2. Direct parse
   try {
     const parsed = JSON.parse(cleaned);
     if (Array.isArray(parsed)) rawList = parsed;
@@ -778,6 +788,27 @@ function extractJsonArray(text: string): any[] | null {
     }
   } catch {}
 
+  // 3. Array starting with [{ and ending with }]
+  if (!rawList) {
+    const firstArrIdx = cleaned.indexOf('[{');
+    const lastArrIdx = cleaned.lastIndexOf('}]');
+    if (firstArrIdx !== -1 && lastArrIdx > firstArrIdx) {
+      const candidate = cleaned.substring(firstArrIdx, lastArrIdx + 2);
+      try {
+        const arr = JSON.parse(candidate);
+        if (Array.isArray(arr) && arr.length > 0) rawList = arr;
+      } catch {}
+      if (!rawList) {
+        try {
+          const fixed = candidate.replace(/,\s*([\]}])/g, '$1');
+          const arr = JSON.parse(fixed);
+          if (Array.isArray(arr) && arr.length > 0) rawList = arr;
+        } catch {}
+      }
+    }
+  }
+
+  // 4. Standard brackets [ ... ]
   if (!rawList) {
     const firstBracket = cleaned.indexOf('[');
     const lastBracket = cleaned.lastIndexOf(']');
@@ -797,23 +828,7 @@ function extractJsonArray(text: string): any[] | null {
     }
   }
 
-  if (!rawList) {
-    const firstBrace = cleaned.indexOf('{');
-    const lastBrace = cleaned.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      try {
-        const obj = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
-        for (const key of Object.keys(obj)) {
-          if (Array.isArray(obj[key])) {
-            rawList = obj[key];
-            break;
-          }
-        }
-      } catch {}
-    }
-  }
-
-  // 3. Robust fallback: Extract any complete scholarship JSON object even if the outer array was truncated
+  // 5. Object stream recovery: extract individual valid JSON objects
   if (!rawList || rawList.length === 0) {
     const objects: any[] = [];
     let depth = 0;
@@ -844,11 +859,13 @@ function extractJsonArray(text: string): any[] | null {
           if (depth === 0 && startIdx !== -1) {
             const block = cleaned.substring(startIdx, i + 1);
             try {
-              objects.push(JSON.parse(block));
+              const obj = JSON.parse(block);
+              if (obj && (obj.titleEn || obj.title || obj.name)) objects.push(obj);
             } catch {
               try {
                 const fixed = block.replace(/,\s*}/g, '}');
-                objects.push(JSON.parse(fixed));
+                const obj = JSON.parse(fixed);
+                if (obj && (obj.titleEn || obj.title || obj.name)) objects.push(obj);
               } catch {}
             }
             startIdx = -1;
