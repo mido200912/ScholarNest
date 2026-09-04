@@ -309,39 +309,115 @@ export async function saveAcceptedScholarship(dataOrDoc: any): Promise<any> {
   return scholarship;
 }
 
-export async function generatePromotionalContent(scholarship: any): Promise<{ arabic: string; english: string }> {
+export async function generatePromotionalContent(scholarship: any, siteUrl: string = process.env.SITE_URL || 'https://scholarnest.up.railway.app'): Promise<{ arabic: string; english: string }> {
   const titleAr = scholarship.title?.ar || scholarship.title?.en || 'منحة دراسية مميزة';
   const titleEn = scholarship.title?.en || 'Featured Scholarship';
-  const uniAr = scholarship.university?.ar || scholarship.university?.en || 'جامعة دولية';
-  const uniEn = scholarship.university?.en || 'International University';
+  const uniAr = scholarship.university?.ar || scholarship.university?.en || 'جامعة دولية مرموقة';
+  const uniEn = scholarship.university?.en || 'Prestigious International University';
   const countryAr = scholarship.country?.ar || scholarship.country?.en || 'دولي';
   const countryEn = scholarship.country?.en || 'International';
   const funding = scholarship.fundingType || 'Fully Funded';
+  const fundingAr = funding === 'Fully Funded' ? 'ممولة بالكامل 100% (تشمل الرسوم + راتب شهري + سكن)' : 'تمويل جزئي';
   const degree = scholarship.degree || 'All Degrees';
-  const link = scholarship.link;
+  const degreeAr = degree === 'Bachelor' ? 'بكالوريوس' : degree === 'Master' ? 'ماجستير' : degree === 'PhD' ? 'دكتوراه' : 'جميع المراحل الأكاديمية';
+  const link = scholarship.link || '';
+  const webLink = `${siteUrl}/scholarships/${scholarship._id || ''}`;
 
-  return {
-    arabic: [
-      `🌟 فرصتك الآن لدراسة مجانية!`,
-      `🎓 منحة: ${titleAr}`,
-      `🏛️ الجامعة: ${uniAr}`,
-      `🌍 البلد: ${countryAr}`,
-      `💰 نوع التمويل: ${funding}`,
-      `📚 المرحلة: ${degree}`,
-      `🔗 رابط التقديم المباشر: ${link}`,
-      `\n✨ تابعوا منصة ScholarNest للمزيد من الفرص والمنح الحصرية!`,
-    ].join('\n'),
-    english: [
-      `🌟 Great Opportunity for International Students!`,
-      `🎓 Scholarship: ${titleEn}`,
-      `🏛️ University: ${uniEn}`,
-      `🌍 Country: ${countryEn}`,
-      `💰 Funding: ${funding}`,
-      `📚 Degree: ${degree}`,
-      `🔗 Apply directly here: ${link}`,
-      `\n✨ Follow ScholarNest for more daily scholarship updates!`,
-    ].join('\n'),
-  };
+  const descAr = scholarship.description?.ar || scholarship.description?.en || '';
+  const descEn = scholarship.description?.en || '';
+  
+  const majorsAr = Array.isArray(scholarship.majors) && scholarship.majors.length > 0
+    ? scholarship.majors.join('، ')
+    : 'متاحة لمعظم التخصصات والمجالات الدراسية (هندسة، طب، علوم، إدارة، علوم إنسانية وغيرها)';
+  const majorsEn = Array.isArray(scholarship.majors) && scholarship.majors.length > 0
+    ? scholarship.majors.join(', ')
+    : 'Open to most academic fields (Engineering, Science, Business, IT, Humanities, etc.)';
+
+  const deadlineFormattedAr = scholarship.deadline
+    ? new Date(scholarship.deadline).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'مفتوح حالياً للعام الأكاديمي 2026/2027';
+
+  const deadlineFormattedEn = scholarship.deadline
+    ? new Date(scholarship.deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'Currently Open for Academic Year 2026/2027';
+
+  const arabic = [
+    `📢✨ فرصة استثنائية للدراسة بالخارج مجاناً لعام 2026! 🎓✈️`,
+    ``,
+    `🔥 منحة: ${titleAr}`,
+    `🏛️ الجامعة: ${uniAr}`,
+    `🌍 الدولة: ${countryAr}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `📌 أهم تفاصيل ومميزات المنحة:`,
+    `💰 نوع التمويل: ${fundingAr}`,
+    `📚 المراحل الدراسية: ${degreeAr} (${degree})`,
+    `🎯 التخصصات المتاحة: ${majorsAr}`,
+    `⏰ آخر موعد للتقديم: ${deadlineFormattedAr}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `📝 نبذة عن المنحة:`,
+    `${descAr.substring(0, 400)}${descAr.length > 400 ? '...' : ''}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🎁 التغطية المالية والمزايا للطلاب المقبولين:`,
+    `✅ إعفاء كامل من الرسوم الدراسية بنسبة 100%`,
+    `✅ راتب شهري لتغطية كافة نفقات المعيشة`,
+    `✅ تأمين صحي شامل طوال فترة الدراسة`,
+    `✅ توفير السكن الجامعي أو بدل سكن`,
+    `✅ تذاكر طيران وبدل استقرار مبدئي`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🔗 كيفية التقديم:`,
+    `👉 رابط التقديم الرسمي المباشر:`,
+    `${link}`,
+    ``,
+    `🌐 تفاصيل المنحة بالكامل والشروط على منصة ScholarNest:`,
+    `${webLink}`,
+    ``,
+    `⚠️ لا تفوت الفرصة، شارك البوست مع أصحابك أو احفظه للتقديم لاحقاً! 👥❤️`,
+    `#منح_دراسية #دراسة_بالخارج #منحة_مجانية #ScholarNest #Scholarships2026 #سفر #تعليم #منح_ممولة`,
+  ].join('\n');
+
+  const english = [
+    `📢✨ Great Opportunity to Study Abroad Fully Funded in 2026! 🎓✈️`,
+    ``,
+    `🔥 Scholarship: ${titleEn}`,
+    `🏛️ University: ${uniEn}`,
+    `🌍 Country: ${countryEn}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `📌 Scholarship Highlights:`,
+    `💰 Funding Type: ${funding} (100% Tuition + Living Stipend + Housing)`,
+    `📚 Degree Level: ${degree}`,
+    `🎯 Eligible Majors: ${majorsEn}`,
+    `⏰ Application Deadline: ${deadlineFormattedEn}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `📝 About This Scholarship:`,
+    `${descEn.substring(0, 400)}${descEn.length > 400 ? '...' : ''}`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🎁 Financial Benefits & Coverage:`,
+    `✅ 100% Full tuition fee coverage`,
+    `✅ Monthly living stipend allowance`,
+    `✅ Free student accommodation or housing subsidy`,
+    `✅ Comprehensive medical health insurance`,
+    `✅ Airfare flight tickets & relocation allowance`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━━`,
+    `🔗 How to Apply:`,
+    `👉 Official Application Link:`,
+    `${link}`,
+    ``,
+    `🌐 View Full Details & Requirements on ScholarNest:`,
+    `${webLink}`,
+    ``,
+    `⚠️ Share this with someone looking for study abroad opportunities! 👥❤️`,
+    `#Scholarships #StudyAbroad #FullyFunded #ScholarNest #InternationalStudents #HigherEducation #GlobalOpportunities`,
+  ].join('\n');
+
+  return { arabic, english };
 }
 
 function escapeHtml(text: string): string {

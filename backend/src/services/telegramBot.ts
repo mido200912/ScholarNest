@@ -6,7 +6,7 @@ import { sendEmail } from './emailService';
 import { pendingHuntScholarships, saveAcceptedScholarship, generatePromotionalContent } from './scholarshipHunterService';
 
 const getApiUrl = () => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
-const SITE_URL = process.env.SITE_URL || 'http://localhost:5173';
+const SITE_URL = process.env.SITE_URL || 'https://scholarnest.up.railway.app';
 
 let offset = 0;
 let polling = false;
@@ -196,17 +196,18 @@ const handleCallbackQuery = async (callbackQuery: any) => {
       const newText = [
         `🎓 <b>${escapeHtml(title)}</b>`,
         '',
-        '❌ <b>تم الرفض</b>',
+        '❌ <b>تم الرفض — لن يتم نشر هذه المنحة على الموقع.</b>',
       ].join('\n');
 
       await editMessageText(chatId, messageId, newText);
-      await answerCallbackQuery(id, 'تم رفض المنحة');
+      await answerCallbackQuery(id, 'تم رفض المنحة ❌');
+      await sendTelegramMessage(chatId, `❌ <b>تم تأكيد الرفض:</b> تم استبعاد منحة "<b>${escapeHtml(title)}</b>".`);
       return;
     }
 
     // Accept flow: save/approve in DB + generate promo content
-    await answerCallbackQuery(id, 'جاري الحفظ وتوليد المحتوى الترويجي...');
-    await editMessageText(chatId, messageId, '⏳ <b>جاري الحفظ في قاعدة البيانات وتوليد المحتوى الترويجي...</b>');
+    await answerCallbackQuery(id, '✅ تم القبول! جاري توليد التقرير والبوست...');
+    await editMessageText(chatId, messageId, '⏳ <b>جاري تأكيد القبول وتوليد المنشور الترويجي الكامل...</b>');
 
     try {
       const saved = await saveAcceptedScholarship(scholarshipDoc || scholarshipData);
@@ -215,38 +216,36 @@ const handleCallbackQuery = async (callbackQuery: any) => {
       const newText = [
         `🎓 <b>${escapeHtml(title)}</b>`,
         '',
-        '✅ <b>تم القبول والحفظ والمحتوى الترويجي جاهز!</b>',
+        '✅ <b>تم القبول والنشر على الموقع بنجاح!</b>',
         '',
-        `🔗 <a href="${SITE_URL}/scholarships/${saved._id}">عرض على الموقع</a>`,
+        `🔗 <a href="${SITE_URL}/scholarships/${saved._id}">عرض المنحة على الموقع</a>`,
       ].join('\n');
 
       await editMessageText(chatId, messageId, newText);
 
       // Generate promotional content
-      const promo = await generatePromotionalContent(saved);
+      const promo = await generatePromotionalContent(saved, SITE_URL);
 
       // Send Arabic promo
       await sendTelegramMessage(chatId, [
-        '📣 <b>المنشور الترويجي (عربي)</b>',
-        'للنشر على: واتساب + فيسبوك + الكوميونتي',
-        '─────────────────',
+        '📢 <b>تقرير ومنشور فيسبوك جاهز للنشر (باللغة العربية) 🇪🇬</b>',
+        '━━━━━━━━━━━━━━━━━━━━━',
         '',
-        promo.arabic,
+        escapeHtml(promo.arabic),
         '',
-        '─────────────────',
-        '📋 انسخ النص أعلاه والصقه في الواتساب والفيسبوك',
+        '━━━━━━━━━━━━━━━━━━━━━',
+        '📋 <i>انسخ النص أعلاه والصقه مباشرة كبوست على فيسبوك وواتساب</i>',
       ].join('\n'));
 
       // Send English promo
       await sendTelegramMessage(chatId, [
-        '📣 <b>Promotional Post (English)</b>',
-        'For: WhatsApp + Facebook + Community',
-        '─────────────────',
+        '📢 <b>Ready-to-Publish Facebook & Social Media Post (English) 🌍</b>',
+        '━━━━━━━━━━━━━━━━━━━━━',
         '',
-        promo.english,
+        escapeHtml(promo.english),
         '',
-        '─────────────────',
-        '📋 Copy the text above and paste it on WhatsApp & Facebook',
+        '━━━━━━━━━━━━━━━━━━━━━',
+        '📋 <i>Copy the text above to publish on Facebook, LinkedIn & Communities</i>',
       ].join('\n'));
 
     } catch (error: any) {
@@ -357,9 +356,8 @@ const pollUpdates = async () => {
 };
 
 export const startBotPolling = () => {
-  // Only poll in production (Railway). In development, Railway already handles it.
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('⏭️ Telegram bot polling skipped (development mode - Railway handles this in production)');
+  if (!process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
+    console.log('⏭️ Telegram bot token not configured, skipping polling');
     return;
   }
   console.log('🤖 Telegram bot polling started');
