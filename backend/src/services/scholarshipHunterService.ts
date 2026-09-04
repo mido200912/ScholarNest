@@ -195,14 +195,23 @@ Return ONLY the JSON array when you are finished.`;
 
     log('--- STEP 2: Agent Execution ---');
     let finalJson = '';
+    const MAX_LOOPS = 6;
     
-    // Agent Loop (Max 5 iterations)
-    for (let loop = 1; loop <= 5; loop++) {
+    // Agent Loop
+    for (let loop = 1; loop <= MAX_LOOPS; loop++) {
       log(`[Agent] Iteration ${loop}...`);
-      const aiResponse = await callAgentWithTools(messages, tools);
+      const isLastLoop = loop === MAX_LOOPS;
+      if (isLastLoop) {
+        messages.push({
+          role: 'user',
+          content: 'You have gathered sufficient scholarship data. Now output ONLY the final JSON array matching the schema without calling any more tools.'
+        });
+      }
+
+      const aiResponse = await callAgentWithTools(messages, isLastLoop ? undefined : tools);
       messages.push(aiResponse);
 
-      if (aiResponse.tool_calls && aiResponse.tool_calls.length > 0) {
+      if (aiResponse.tool_calls && aiResponse.tool_calls.length > 0 && !isLastLoop) {
         for (const call of aiResponse.tool_calls) {
           if (call.function.name === 'search_web') {
             const args = JSON.parse(call.function.arguments || '{}');
@@ -225,6 +234,18 @@ Return ONLY the JSON array when you are finished.`;
         log(`[Agent] Finished and returned data.`);
         break;
       }
+    }
+
+    // Safety fallback: if loop ended with tool results, make one dedicated synthesis call
+    if (!finalJson) {
+      log('[Agent] ⚡ Requesting final JSON array compilation from gathered data...');
+      messages.push({
+        role: 'user',
+        content: 'Compile all the gathered scholarships above into the final JSON array right now. Return ONLY the valid JSON array.'
+      });
+      const synthesisResponse = await callAgentWithTools(messages);
+      finalJson = synthesisResponse.content || synthesisResponse.reasoning || '';
+      log(`[Agent Synthesis Response]: ${finalJson.substring(0, 300)}...`);
     }
 
     if (!finalJson) throw new Error('Agent failed to return final JSON content.');
