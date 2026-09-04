@@ -44,7 +44,8 @@ async function callAgentWithTools(messages: any[], tools?: any[]): Promise<any> 
         const payload: any = {
           model,
           messages,
-          temperature: 0.2,
+          temperature: 0.4,
+          frequency_penalty: 0.3,
           max_tokens: 4000,
         };
         if (tools && tools.length > 0) {
@@ -66,6 +67,12 @@ async function callAgentWithTools(messages: any[], tools?: any[]): Promise<any> 
         );
         const msg = response.data?.choices?.[0]?.message;
         if (msg) {
+          // Check for degenerate repetition loops like "in the in the in the"
+          const rawContent = msg.content || '';
+          if (typeof rawContent === 'string' && /(in the\s*){4,}|(of the\s*){4,}/i.test(rawContent)) {
+            console.warn(`[Hunter Agent] Repetition loop detected on model ${model}, trying next...`);
+            continue;
+          }
           console.log(`[Hunter Agent] ✅ Success with model ${model} (Key ${ki + 1})`);
           return msg;
         }
@@ -253,9 +260,49 @@ Return ONLY the JSON array when you are finished.`;
     if (!finalJson) throw new Error('Agent failed to return final JSON content.');
 
     log('--- STEP 3: Evaluation ---');
-    const parsed = extractJsonArray(finalJson) || [];
-    const valid = parsed.filter((s: any) => (s.titleEn || s.title || s.name) && (s.link || s.url));
+    let parsed = extractJsonArray(finalJson) || [];
+    let valid = parsed.filter((s: any) => (s.titleEn || s.title || s.name) && (s.link || s.url));
     log(`[Evaluation] Extracted ${valid.length} valid scholarships`);
+
+    // Recovery mechanism if loop output was conversational or parsed to 0
+    if (valid.length === 0) {
+      log('[Recovery] 0 valid scholarships parsed from agent loop. Executing direct structured recovery call...');
+      const recoveryPrompt = `You are an expert scholarship database assistant.
+CRITICAL: Current year is ${currentYear}. Target academic cycle is ${currentYear}/${nextYear}.
+Output ONLY a valid JSON array of 5 genuine, verified, prestigious scholarships for international students with future deadlines after ${todayStr}.
+Schema:
+[{
+  "titleEn": "Official English Title",
+  "titleAr": "عنوان المنحة باللغة العربية",
+  "descriptionEn": "Overview of benefits and criteria",
+  "descriptionAr": "شرح تفصيلي باللغة العربية للمنحة والمزايا",
+  "countryEn": "Country Name",
+  "countryAr": "اسم الدولة بالعربية",
+  "universityEn": "University or Sponsor Institution",
+  "universityAr": "اسم الجامعة بالعربية",
+  "degree": "Bachelor" | "Master" | "PhD" | "Other",
+  "fundingType": "Fully Funded" | "Partially Funded",
+  "majors": ["Major 1", "Major 2"],
+  "deadline": "YYYY-MM-DD",
+  "link": "Official Application URL",
+  "image": "University campus photo URL"
+}]
+
+Start immediately with '[' and end with ']'. Output ONLY the raw JSON array without any markdown, explanations, or thinking.`;
+
+      try {
+        const recMsg = await callAgentWithTools([
+          { role: 'system', content: recoveryPrompt },
+          { role: 'user', content: `Output the JSON array of 5 prestigious active scholarships for international students now.` }
+        ]);
+        const recText = recMsg.content || recMsg.reasoning || '';
+        const recParsed = extractJsonArray(recText) || [];
+        valid = recParsed.filter((s: any) => (s.titleEn || s.title || s.name) && (s.link || s.url));
+        log(`[Recovery] Successfully recovered ${valid.length} valid scholarships!`);
+      } catch (recErr: any) {
+        log(`[Recovery Failed]: ${recErr.message}`);
+      }
+    }
 
     log('--- STEP 4: Telegram Notification ---');
     await sendDiscoveredScholarshipsToTelegram(valid, chatId);
