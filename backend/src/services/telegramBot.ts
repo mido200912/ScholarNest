@@ -1,15 +1,18 @@
 import axios from 'axios';
 import mongoose from 'mongoose';
 import { Scholarship } from '../models/Scholarship';
-import { answerCallbackQuery, editMessageText, sendTelegramMessage } from './telegramService';
+import { answerCallbackQuery, editMessageText, sendTelegramMessage, sendTelegramPhoto } from './telegramService';
 import { sendEmail } from './emailService';
-import { pendingHuntScholarships, saveAcceptedScholarship, generatePromotionalContent } from './scholarshipHunterService';
+import { pendingHuntScholarships, saveAcceptedScholarship, generatePromotionalContent, modifyScholarshipWithAI } from './scholarshipHunterService';
 
 const getApiUrl = () => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const SITE_URL = process.env.SITE_URL || 'https://scholarnest.up.railway.app';
 
 let offset = 0;
 let polling = false;
+
+// Active interactive AI editing sessions per chat ID
+const activeEditingSessions = new Map<string, { scholarshipId: string; title: string }>();
 
 const escapeHtml = (text: string) =>
   text
@@ -61,6 +64,62 @@ const handleTextMessage = async (chatIdRaw: number | string, text: string) => {
   const chatId = String(chatIdRaw);
   const input = text.trim();
   const isAr = /[\u0600-\u06FF]/.test(input);
+
+  // ── Handle Active Interactive AI Editing Session ─────────────────────────
+  if (activeEditingSessions.has(chatId)) {
+    const session = activeEditingSessions.get(chatId)!;
+    activeEditingSessions.delete(chatId);
+
+    await sendTelegramMessage(chatId, `⏳ <b>جاري تنفيذ التعديل بواسطة الذكاء الاصطناعي...</b>\n\n✍️ <i>"${escapeHtml(input)}"</i>`);
+
+    try {
+      const result = await modifyScholarshipWithAI(session.scholarshipId, input);
+      const s = result.scholarship;
+      const title = s.title?.en || s.titleEn || 'المنحة';
+      const titleAr = s.title?.ar || s.titleAr || '';
+      const uni = s.university?.en || s.universityEn || 'Various';
+      const country = s.country?.en || s.countryEn || 'International';
+      const funding = s.fundingType || 'Fully Funded';
+      const degree = s.degree || 'Other';
+      const deadlineFormatted = s.deadline ? new Date(s.deadline).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) : '2026/2027';
+      const displayImage = s.image;
+
+      const caption = [
+        `✨ <b>تم التعديل بالذكاء الاصطناعي!</b> (${escapeHtml(result.changes)})`,
+        '━━━━━━━━━━━━━━━━━━━━━',
+        `🎓 <b>${escapeHtml(titleAr || title)}</b>`,
+        title && titleAr !== title ? `📌 <i>${escapeHtml(title)}</i>` : '',
+        '',
+        `🏛 <b>الجامعة:</b> ${escapeHtml(s.university?.ar || s.universityAr || uni)}`,
+        `🌍 <b>الدولة:</b> ${escapeHtml(s.country?.ar || s.countryAr || country)}`,
+        `💰 <b>التمويل:</b> ${escapeHtml(funding)}`,
+        `🎯 <b>المرحلة:</b> ${escapeHtml(degree)}`,
+        `⏰ <b>الموعد النهائي:</b> ${deadlineFormatted}`,
+        `🔗 <a href="${s.link}">رابط التقديم الرسمي للجامعة</a>`,
+        '',
+        `📝 <b>نبذة:</b> ${escapeHtml((s.description?.ar || s.descriptionAr || s.description?.en || s.descriptionEn || '').substring(0, 180))}...`,
+      ].filter(Boolean).join('\n');
+
+      const replyMarkup = {
+        inline_keyboard: [
+          [
+            { text: '✅ قبول ونشر على الموقع', callback_data: `hunt_accept:${session.scholarshipId}` },
+            { text: '❌ استبعاد', callback_data: `hunt_reject:${session.scholarshipId}` },
+          ],
+          [
+            { text: '✏️ تعديل إضافي بالـ AI', callback_data: `hunt_ai_edit:${session.scholarshipId}` },
+            { text: '🛠️ تعديل يدوي بالموقع', url: `${SITE_URL}/admin/scholarships` },
+          ]
+        ]
+      };
+
+      await sendTelegramPhoto(chatId, displayImage, caption, replyMarkup);
+    } catch (err: any) {
+      console.error('[AI Edit Handler Error]:', err.message);
+      await sendTelegramMessage(chatId, `❌ حدث خطأ أثناء تنفيذ التعديل: ${escapeHtml(err.message)}`);
+    }
+    return;
+  }
 
   if (input === '/start' || input === '/help') {
     await sendTelegramMessage(
@@ -151,6 +210,54 @@ const handleCallbackQuery = async (callbackQuery: any) => {
 
   const [action, payload] = data.split(':');
 
+  // ── Handle AI Edit Request ────────────────────────────────────────────────
+  if (action === 'hunt_ai_edit') {
+    let scholarshipDoc: any = null;
+    let scholarshipData = pendingHuntScholarships.get(payload);
+
+    if (mongoose.Types.ObjectId.isValid(payload)) {
+      try {
+        scholarshipDoc = await Scholarship.findById(payload);
+      } catch {}
+    }
+
+    const title = scholarshipDoc?.title?.ar || scholarshipDoc?.title?.en || scholarshipData?.titleAr || scholarshipData?.titleEn || 'المنحة';
+
+    activeEditingSessions.set(chatId, { scholarshipId: payload, title });
+
+    await answerCallbackQuery(id, 'اكتب التعديل المطلوب في رسالة ✍️');
+    await sendTelegramMessage(
+      chatId,
+      [
+        `🤖 <b>تعديل بالذكاء الاصطناعي لمنحة:</b>`,
+        `🎓 <b>${escapeHtml(title)}</b>`,
+        '',
+        '✍️ <i>أرسل لي الآن في رسالة ما تريد تعديله، وسيقوم الذكاء الاصطناعي بتنفيذه فوراً:</i>',
+        '',
+        '<b>أمثلة:</b>',
+        '• <code>غير الصورة لصورة أخرى للجامعة</code>',
+        '• <code>مد الموعد النهائي إلى 30 نوفمبر 2026</code>',
+        '• <code>أضف تخصص الذكاء الاصطناعي وهندسة البيانات</code>',
+        '• <code>اجعل المنحة ممولة بالكامل</code>',
+        '• <code>حسّن صياغة الوصف العربي</code>',
+      ].join('\n'),
+      {
+        inline_keyboard: [[
+          { text: '❌ إلغاء التعديل', callback_data: 'hunt_cancel_edit' }
+        ]]
+      }
+    );
+    return;
+  }
+
+  // ── Handle Cancel Edit ────────────────────────────────────────────────────
+  if (action === 'hunt_cancel_edit') {
+    activeEditingSessions.delete(chatId);
+    await answerCallbackQuery(id, 'تم إلغاء التعديل');
+    await sendTelegramMessage(chatId, '❌ تم إلغاء جلسة التعديل.');
+    return;
+  }
+
   // ── Handle Hunt Accept/Reject ──────────────────────────────────────────────
   if (action === 'hunt_accept' || action === 'hunt_reject') {
     let scholarshipData = pendingHuntScholarships.get(payload);
@@ -192,16 +299,28 @@ const handleCallbackQuery = async (callbackQuery: any) => {
         scholarshipDoc.status = 'rejected';
         await scholarshipDoc.save();
       }
-      const title = scholarshipData?.titleEn || scholarshipDoc?.title?.en || 'المنحة';
+      const title = scholarshipData?.titleAr || scholarshipDoc?.title?.ar || scholarshipData?.titleEn || scholarshipDoc?.title?.en || 'المنحة';
       const newText = [
         `🎓 <b>${escapeHtml(title)}</b>`,
         '',
-        '❌ <b>تم الرفض — لن يتم نشر هذه المنحة على الموقع.</b>',
+        '❌ <b>تم استبعاد هذه المنحة من النشر التلقائي.</b>',
+        '',
+        '💡 <b>خيارات إضافية:</b>',
+        `• يمكنك مراجعتها وتعديلها يدوياً: <a href="${SITE_URL}/admin/scholarships">لوحة التحكم</a>`,
+        '• أو يمكنك طلب تعديلها بواسطة الذكاء الاصطناعي وتغيير صورتها أو موعدها بالزر أدناه:',
       ].join('\n');
 
-      await editMessageText(chatId, messageId, newText);
-      await answerCallbackQuery(id, 'تم رفض المنحة ❌');
-      await sendTelegramMessage(chatId, `❌ <b>تم تأكيد الرفض:</b> تم استبعاد منحة "<b>${escapeHtml(title)}</b>".`);
+      const rejectMarkup = {
+        inline_keyboard: [
+          [
+            { text: '✏️ اطلب من الـ AI تعديلها', callback_data: `hunt_ai_edit:${payload}` },
+            { text: '🛠️ تعديل يدوي بالموقع', url: `${SITE_URL}/admin/scholarships` }
+          ]
+        ]
+      };
+
+      await editMessageText(chatId, messageId, newText, rejectMarkup);
+      await answerCallbackQuery(id, 'تم استبعاد المنحة ❌');
       return;
     }
 

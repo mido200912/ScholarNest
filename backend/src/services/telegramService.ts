@@ -34,6 +34,44 @@ export const sendTelegramMessage = async (
   }
 };
 
+export const sendTelegramPhoto = async (
+  chatId: string,
+  photoUrl: string,
+  caption?: string,
+  replyMarkup?: any
+): Promise<boolean> => {
+  try {
+    if (!process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN === 'YOUR_TELEGRAM_BOT_TOKEN_HERE') {
+      return false;
+    }
+
+    if (!photoUrl || !photoUrl.startsWith('http')) {
+      return sendTelegramMessage(chatId, caption || '', replyMarkup);
+    }
+
+    const payload: any = {
+      chat_id: chatId,
+      photo: photoUrl,
+      caption: (caption || '').substring(0, 1024),
+      parse_mode: 'HTML',
+    };
+
+    if (replyMarkup) {
+      payload.reply_markup = replyMarkup;
+    }
+
+    await axios.post(`${getApiUrl()}/sendPhoto`, payload);
+    console.log(`Telegram photo sent to ${chatId}`);
+    return true;
+  } catch (error: any) {
+    console.warn(`[Telegram Photo] sendPhoto failed (${error.response?.data?.description || error.message}), falling back to text`);
+    const fallbackText = photoUrl && photoUrl.startsWith('http')
+      ? `${caption || ''}\n\n🖼️ <a href="${photoUrl}">عرض صورة الحرم الجامعي</a>`
+      : (caption || '');
+    return sendTelegramMessage(chatId, fallbackText, replyMarkup);
+  }
+};
+
 export const answerCallbackQuery = async (callbackQueryId: string, text?: string): Promise<void> => {
   try {
     await axios.post(`${getApiUrl()}/answerCallbackQuery`, {
