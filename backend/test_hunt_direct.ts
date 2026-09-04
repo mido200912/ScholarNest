@@ -1,3 +1,5 @@
+import dns from 'dns';
+try { dns.setServers(['8.8.8.8', '1.1.1.1']); } catch {}
 import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });

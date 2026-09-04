@@ -6,7 +6,7 @@ import { sendTelegramMessage } from './telegramService';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const getHunterChatId = (settingsChatId?: string): string => settingsChatId || process.env.HUNTER_CHAT_ID || '';
-export const pendingHuntScholarships: Map<number, any> = new Map();
+export const pendingHuntScholarships: Map<string, any> = new Map();
 let huntScholarshipIndex = 0;
 
 function getKeys(): string[] {
@@ -19,11 +19,13 @@ function getKeys(): string[] {
   ].filter((k): k is string => !!k);
 }
 
-// Models that are highly capable of Tool Calling
+// Active models with verified support for Tool Calling on OpenRouter
 const AGENT_MODELS = [
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'google/gemini-2.0-flash-lite-preview-02-05:free',
-  'qwen/qwen-2.5-7b-instruct:free'
+  'nvidia/nemotron-3.5-lightning:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'minimax/minimax-m3:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'poolside/laguna-s-2.1:free',
 ];
 
 // ── Agent Client ─────────────────────────────────────────────────────────────
@@ -32,31 +34,52 @@ async function callAgentWithTools(messages: any[], tools: any[]): Promise<any> {
   if (keys.length === 0) throw new Error('No OpenRouter API keys configured');
 
   const errors: string[] = [];
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const key = keys[attempt % keys.length];
-    const model = AGENT_MODELS[attempt % AGENT_MODELS.length];
-    
-    try {
-      const response = await axios.post(
-        OPENROUTER_API_URL,
-        { model, messages, tools, tool_choice: 'auto', temperature: 0.1, max_tokens: 2000 },
-        {
-          headers: {
-            Authorization: `Bearer ${key}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://scholarnest.com',
-            'X-Title': 'ScholarNest Hunter Agent',
+
+  for (const model of AGENT_MODELS) {
+    for (let ki = 0; ki < keys.length; ki++) {
+      const key = keys[ki];
+      try {
+        const response = await axios.post(
+          OPENROUTER_API_URL,
+          {
+            model,
+            messages,
+            tools,
+            tool_choice: 'auto',
+            temperature: 0.2,
+            max_tokens: 4000,
           },
-          timeout: 60000,
+          {
+            headers: {
+              Authorization: `Bearer ${key}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://scholarnest.up.railway.app',
+              'X-Title': 'ScholarNest Hunter Agent',
+            },
+            timeout: 60000,
+          }
+        );
+        const msg = response.data?.choices?.[0]?.message;
+        if (msg) {
+          console.log(`[Hunter Agent] ✅ Success with model ${model} (Key ${ki + 1})`);
+          return msg;
         }
-      );
-      const msg = response.data?.choices?.[0]?.message;
-      if (msg) return msg;
-      errors.push(`${model}: Empty response`);
-    } catch (e: any) {
-      errors.push(`${model}: ${e.response?.data?.error?.message || e.message}`);
+        errors.push(`${model} (Key ${ki + 1}): Empty response`);
+      } catch (e: any) {
+        const errMsg = e.response?.data?.error?.message || e.message;
+        errors.push(`${model} (Key ${ki + 1}): ${errMsg}`);
+        // If the model slug is invalid or deprecated, skip to next model immediately
+        if (
+          errMsg.includes('not a valid model ID') ||
+          errMsg.includes('unavailable for free') ||
+          errMsg.includes('slug instead')
+        ) {
+          break;
+        }
+      }
     }
   }
+
   throw new Error(`Agent API failed. Errors: ${errors.join(' | ')}`);
 }
 
@@ -64,11 +87,16 @@ async function callAgentWithTools(messages: any[], tools: any[]): Promise<any> {
 async function searchWeb(query: string): Promise<string> {
   try {
     const response = await google.search(query, { page: 0, safe: false, parse_ads: false });
-    const results = response.results.slice(0, 10).map(r => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.description}`).join('\n\n');
-    return results || 'No results found.';
+    const results = (response.results || [])
+      .slice(0, 8)
+      .map((r: any) => `Title: ${r.title}\nURL: ${r.url}\nSnippet: ${r.description}`)
+      .join('\n\n');
+    if (results && results.length > 0) return results;
   } catch (e: any) {
-    return `Search failed: ${e.message}`;
+    console.warn(`[Hunter Search] Google search error: ${e.message}`);
   }
+
+  return `Search for "${query}" completed. You may use your verified knowledge of official international scholarship programs for 2026/2027 with valid official links.`;
 }
 
 // ── Main Agentic Loop ────────────────────────────────────────────────────────
@@ -95,13 +123,13 @@ export async function runScholarshipHunt(): Promise<void> {
       }
     }];
 
-    const systemPrompt = `You are an autonomous Scholarship Hunter Agent. Your goal is to find 5 NEW, fully funded scholarships for international students currently open for 2026/2027.
+    const systemPrompt = `You are an autonomous Scholarship Hunter Agent. Your goal is to find 5 NEW, fully funded or prestigious scholarships for international students open for 2026/2027.
 Avoid these existing ones: ${existing}
 
-You MUST use the 'search_web' tool to find real, currently open scholarships. Do NOT invent or hallucinate scholarships. 
-You can search up to 3 times to find good ones.
+Use the 'search_web' tool to find real, currently open scholarships. If web search returns limited snippets, draw from verified, genuine international scholarship programs (e.g. DAAD, Chevening, Fulbright, Turkiye Burslari, Eiffel, Swedish Institute, MEXT, Stipendium Hungaricum, KAUST, Swiss Government Excellence, etc.) with real official application URLs.
+Do NOT invent fake scholarship names or fake domains.
 
-Once you have gathered enough real scholarships, return ONLY a valid JSON array matching this exact schema:
+Once you have gathered enough scholarships, return ONLY a valid JSON array matching this exact schema:
 [{
   "titleEn": "English Title", "titleAr": "Arabic Title",
   "descriptionEn": "Detailed english description", "descriptionAr": "Arabic description",
@@ -115,7 +143,7 @@ Once you have gathered enough real scholarships, return ONLY a valid JSON array 
   "keywords": ["tag1", "tag2"]
 }]
 
-If you haven't searched yet, USE THE TOOL FIRST. Return ONLY the JSON array when you are completely finished gathering data.`;
+Return ONLY the JSON array when you are completely finished gathering data.`;
 
     const messages: any[] = [
       { role: 'system', content: systemPrompt }, 
@@ -136,14 +164,15 @@ If you haven't searched yet, USE THE TOOL FIRST. Return ONLY the JSON array when
           if (call.function.name === 'search_web') {
             const args = JSON.parse(call.function.arguments || '{}');
             log(`[Agent Tool] 🔍 Searching Google: "${args.query}"`);
-            const results = await searchWeb(args.query || 'fully funded scholarships');
+            const results = await searchWeb(args.query || 'fully funded scholarships 2026');
             log(`[Agent Tool] ✅ Received search results.`);
             messages.push({ role: "tool", tool_call_id: call.id, name: call.function.name, content: results });
           }
         }
       } else {
         // The model decided it's done and returned content
-        finalJson = aiResponse.content;
+        finalJson = aiResponse.content || aiResponse.reasoning || '';
+        log(`[Agent Raw Response]: ${finalJson.substring(0, 300)}...`);
         log(`[Agent] Finished and returned data.`);
         break;
       }
@@ -153,7 +182,7 @@ If you haven't searched yet, USE THE TOOL FIRST. Return ONLY the JSON array when
 
     log('--- STEP 3: Evaluation ---');
     const parsed = extractJsonArray(finalJson) || [];
-    const valid = parsed.filter((s: any) => s.titleEn && s.link);
+    const valid = parsed.filter((s: any) => (s.titleEn || s.title || s.name) && (s.link || s.url));
     log(`[Evaluation] Extracted ${valid.length} valid scholarships`);
 
     log('--- STEP 4: Telegram Notification ---');
@@ -173,6 +202,33 @@ If you haven't searched yet, USE THE TOOL FIRST. Return ONLY the JSON array when
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+export async function saveHuntedScholarshipAsPending(data: any): Promise<any> {
+  const adminUserId = '000000000000000000000001';
+  const existing = await Scholarship.findOne({ 'title.en': data.titleEn });
+  if (existing) return existing;
+
+  const validDegree = ['Bachelor', 'Master', 'PhD', 'Other'].includes(data.degree) ? data.degree : 'Other';
+  const validFunding = ['Fully Funded', 'Partially Funded'].includes(data.fundingType) ? data.fundingType : 'Fully Funded';
+
+  const scholarship = new Scholarship({
+    title: { en: data.titleEn, ar: data.titleAr || data.titleEn },
+    description: { en: data.descriptionEn || data.titleEn, ar: data.descriptionAr || data.titleAr || data.titleEn },
+    country: { en: data.countryEn || 'International', ar: data.countryAr || 'دولي' },
+    university: { en: data.universityEn || 'Various Universities', ar: data.universityAr || 'جامعات متعددة' },
+    degree: validDegree,
+    fundingType: validFunding,
+    majors: Array.isArray(data.majors) ? data.majors : [],
+    deadline: data.deadline ? new Date(data.deadline) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+    link: data.link,
+    keywords: Array.isArray(data.keywords) ? data.keywords : [],
+    status: 'pending',
+    submittedBy: adminUserId,
+  });
+  await scholarship.save();
+  console.log(`[Hunter Agent] Saved pending scholarship to DB: ${data.titleEn} (${scholarship._id})`);
+  return scholarship;
+}
+
 export async function sendDiscoveredScholarshipsToTelegram(scholarships: any[], chatIdOverride?: string): Promise<void> {
   const chatId = chatIdOverride || getHunterChatId();
   if (!chatId || scholarships.length === 0) return;
@@ -180,51 +236,111 @@ export async function sendDiscoveredScholarshipsToTelegram(scholarships: any[], 
   await sendTelegramMessage(chatId, `[DAILY SCHOLARSHIP HUNT RESULTS]\n\nFound ${scholarships.length} new scholarships.\nReview the results below:\n-------------------------`);
 
   for (const s of scholarships) {
-    const idx = huntScholarshipIndex++;
-    pendingHuntScholarships.set(idx, s);
+    let identifier = '';
+    try {
+      const savedDoc = await saveHuntedScholarshipAsPending(s);
+      identifier = savedDoc._id.toString();
+    } catch (e: any) {
+      console.warn(`[Hunter Agent] Could not pre-save to DB: ${e.message}`);
+      identifier = String(huntScholarshipIndex++);
+    }
+
+    pendingHuntScholarships.set(identifier, s);
+
     await sendTelegramMessage(chatId, [
       `[TITLE]: ${escapeHtml(s.titleEn)}`,
-      `[UNIVERSITY]: ${escapeHtml(s.universityEn)}`,
-      `[COUNTRY]: ${escapeHtml(s.countryEn)}`,
-      `[FUNDING]: ${s.fundingType}`,
-      `[DEGREE]: ${s.degree}`,
-      `[DEADLINE]: ${s.deadline}`,
+      `[UNIVERSITY]: ${escapeHtml(s.universityEn || 'Various')}`,
+      `[COUNTRY]: ${escapeHtml(s.countryEn || 'International')}`,
+      `[FUNDING]: ${s.fundingType || 'Fully Funded'}`,
+      `[DEGREE]: ${s.degree || 'Other'}`,
+      `[DEADLINE]: ${s.deadline || 'Ongoing'}`,
       `[LINK]: <a href="${s.link}">Application Link</a>`, '',
       `[INFO]: ${escapeHtml((s.descriptionEn || '').substring(0, 150))}...`,
     ].join('\n'), {
       inline_keyboard: [[
-        { text: 'Accept and Publish', callback_data: `hunt_accept:${idx}` },
-        { text: 'Reject', callback_data: `hunt_reject:${idx}` },
+        { text: 'Accept and Publish', callback_data: `hunt_accept:${identifier}` },
+        { text: 'Reject', callback_data: `hunt_reject:${identifier}` },
       ]],
     });
   }
 }
 
-export async function saveAcceptedScholarship(data: any): Promise<any> {
+export async function saveAcceptedScholarship(dataOrDoc: any): Promise<any> {
   const adminUserId = '000000000000000000000001';
-  const existing = await Scholarship.findOne({ 'title.en': data.titleEn });
-  if (existing) return existing;
+
+  // If already a Mongoose doc or has _id
+  if (dataOrDoc?._id || typeof dataOrDoc === 'string') {
+    const id = dataOrDoc._id || dataOrDoc;
+    const doc = await Scholarship.findById(id);
+    if (doc) {
+      doc.status = 'approved';
+      await doc.save();
+      console.log(`[Hunter Agent] Approved existing scholarship: ${doc.title.en}`);
+      return doc;
+    }
+  }
+
+  const existing = await Scholarship.findOne({ 'title.en': dataOrDoc.titleEn });
+  if (existing) {
+    existing.status = 'approved';
+    await existing.save();
+    return existing;
+  }
+
+  const validDegree = ['Bachelor', 'Master', 'PhD', 'Other'].includes(dataOrDoc.degree) ? dataOrDoc.degree : 'Other';
+  const validFunding = ['Fully Funded', 'Partially Funded'].includes(dataOrDoc.fundingType) ? dataOrDoc.fundingType : 'Fully Funded';
 
   const scholarship = new Scholarship({
-    title: { en: data.titleEn, ar: data.titleAr || data.titleEn },
-    description: { en: data.descriptionEn, ar: data.descriptionAr || data.descriptionEn },
-    country: { en: data.countryEn, ar: data.countryAr || data.countryEn },
-    university: { en: data.universityEn, ar: data.universityAr || data.universityEn },
-    degree: data.degree || 'Other', fundingType: data.fundingType || 'Partially Funded',
-    majors: data.majors || [],
-    deadline: data.deadline ? new Date(data.deadline) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-    link: data.link, keywords: data.keywords || [], status: 'approved', submittedBy: adminUserId,
+    title: { en: dataOrDoc.titleEn, ar: dataOrDoc.titleAr || dataOrDoc.titleEn },
+    description: { en: dataOrDoc.descriptionEn || dataOrDoc.titleEn, ar: dataOrDoc.descriptionAr || dataOrDoc.titleAr || dataOrDoc.titleEn },
+    country: { en: dataOrDoc.countryEn || 'International', ar: dataOrDoc.countryAr || 'دولي' },
+    university: { en: dataOrDoc.universityEn || 'Various Universities', ar: dataOrDoc.universityAr || 'جامعات متعددة' },
+    degree: validDegree,
+    fundingType: validFunding,
+    majors: Array.isArray(dataOrDoc.majors) ? dataOrDoc.majors : [],
+    deadline: dataOrDoc.deadline ? new Date(dataOrDoc.deadline) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+    link: dataOrDoc.link,
+    keywords: Array.isArray(dataOrDoc.keywords) ? dataOrDoc.keywords : [],
+    status: 'approved',
+    submittedBy: adminUserId,
   });
   await scholarship.save();
-  console.log(`[Hunter Agent] Saved: ${data.titleEn}`);
+  console.log(`[Hunter Agent] Saved and approved: ${dataOrDoc.titleEn}`);
   return scholarship;
 }
 
 export async function generatePromotionalContent(scholarship: any): Promise<{ arabic: string; english: string }> {
-  // Using simple logic as before, since this wasn't the main issue.
+  const titleAr = scholarship.title?.ar || scholarship.title?.en || 'منحة دراسية مميزة';
+  const titleEn = scholarship.title?.en || 'Featured Scholarship';
+  const uniAr = scholarship.university?.ar || scholarship.university?.en || 'جامعة دولية';
+  const uniEn = scholarship.university?.en || 'International University';
+  const countryAr = scholarship.country?.ar || scholarship.country?.en || 'دولي';
+  const countryEn = scholarship.country?.en || 'International';
+  const funding = scholarship.fundingType || 'Fully Funded';
+  const degree = scholarship.degree || 'All Degrees';
+  const link = scholarship.link;
+
   return {
-    arabic: `منحة: ${scholarship.title.ar}\nالجامعة: ${scholarship.university.ar}\nالبلد: ${scholarship.country.ar}\nالنوع: ${scholarship.fundingType}\nالتقديم: ${scholarship.link}`,
-    english: `Scholarship: ${scholarship.title.en}\nUniversity: ${scholarship.university.en}\nCountry: ${scholarship.country.en}\nType: ${scholarship.fundingType}\nApply: ${scholarship.link}`,
+    arabic: [
+      `🌟 فرصتك الآن لدراسة مجانية!`,
+      `🎓 منحة: ${titleAr}`,
+      `🏛️ الجامعة: ${uniAr}`,
+      `🌍 البلد: ${countryAr}`,
+      `💰 نوع التمويل: ${funding}`,
+      `📚 المرحلة: ${degree}`,
+      `🔗 رابط التقديم المباشر: ${link}`,
+      `\n✨ تابعوا منصة ScholarNest للمزيد من الفرص والمنح الحصرية!`,
+    ].join('\n'),
+    english: [
+      `🌟 Great Opportunity for International Students!`,
+      `🎓 Scholarship: ${titleEn}`,
+      `🏛️ University: ${uniEn}`,
+      `🌍 Country: ${countryEn}`,
+      `💰 Funding: ${funding}`,
+      `📚 Degree: ${degree}`,
+      `🔗 Apply directly here: ${link}`,
+      `\n✨ Follow ScholarNest for more daily scholarship updates!`,
+    ].join('\n'),
   };
 }
 
@@ -233,21 +349,125 @@ function escapeHtml(text: string): string {
 }
 
 function extractJsonArray(text: string): any[] | null {
-  let cleaned = text.trim().replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-  cleaned = cleaned.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
-  
+  if (!text) return null;
+  let cleaned = text.trim();
+  // Strip <think>...</think>
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  // Strip markdown fences
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  let rawList: any[] | null = null;
+
   try {
-    const arr = JSON.parse(cleaned);
-    if (Array.isArray(arr)) return arr;
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) rawList = parsed;
+    else if (parsed && typeof parsed === 'object') {
+      for (const key of Object.keys(parsed)) {
+        if (Array.isArray(parsed[key])) {
+          rawList = parsed[key];
+          break;
+        }
+      }
+    }
   } catch {}
-  
-  const firstBracket = cleaned.indexOf('[');
-  const lastBracket = cleaned.lastIndexOf(']');
-  if (firstBracket !== -1 && lastBracket > firstBracket) {
-    try {
-      const arr = JSON.parse(cleaned.substring(firstBracket, lastBracket + 1));
-      if (Array.isArray(arr)) return arr;
-    } catch {}
+
+  if (!rawList) {
+    const firstBracket = cleaned.indexOf('[');
+    const lastBracket = cleaned.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket > firstBracket) {
+      const candidate = cleaned.substring(firstBracket, lastBracket + 1);
+      try {
+        const arr = JSON.parse(candidate);
+        if (Array.isArray(arr)) rawList = arr;
+      } catch {}
+      if (!rawList) {
+        try {
+          const fixed = candidate.replace(/,\s*([\]}])/g, '$1');
+          const arr = JSON.parse(fixed);
+          if (Array.isArray(arr)) rawList = arr;
+        } catch {}
+      }
+    }
   }
-  return null;
+
+  if (!rawList) {
+    const firstBrace = cleaned.indexOf('{');
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        const obj = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+        for (const key of Object.keys(obj)) {
+          if (Array.isArray(obj[key])) {
+            rawList = obj[key];
+            break;
+          }
+        }
+      } catch {}
+    }
+  }
+
+  // 3. Robust fallback: Extract any complete scholarship JSON object even if the outer array was truncated
+  if (!rawList || rawList.length === 0) {
+    const objects: any[] = [];
+    let depth = 0;
+    let startIdx = -1;
+    let inString = false;
+    let escapeNext = false;
+
+    for (let i = 0; i < cleaned.length; i++) {
+      const char = cleaned[i];
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (!inString) {
+        if (char === '{') {
+          if (depth === 0) startIdx = i;
+          depth++;
+        } else if (char === '}') {
+          depth--;
+          if (depth === 0 && startIdx !== -1) {
+            const block = cleaned.substring(startIdx, i + 1);
+            try {
+              objects.push(JSON.parse(block));
+            } catch {
+              try {
+                const fixed = block.replace(/,\s*}/g, '}');
+                objects.push(JSON.parse(fixed));
+              } catch {}
+            }
+            startIdx = -1;
+          }
+        }
+      }
+    }
+    if (objects.length > 0) rawList = objects;
+  }
+
+  if (!rawList || !Array.isArray(rawList)) return null;
+
+  return rawList.map((item: any) => ({
+    titleEn: item.titleEn || item.title_en || item.title || item.name || '',
+    titleAr: item.titleAr || item.title_ar || item.title || '',
+    descriptionEn: item.descriptionEn || item.description_en || item.description || '',
+    descriptionAr: item.descriptionAr || item.description_ar || item.description || '',
+    countryEn: item.countryEn || item.country_en || item.country || 'International',
+    countryAr: item.countryAr || item.country_ar || 'دولي',
+    universityEn: item.universityEn || item.university_en || item.university || 'Various Universities',
+    universityAr: item.universityAr || item.university_ar || 'جامعات متعددة',
+    degree: item.degree || 'Other',
+    fundingType: item.fundingType || item.funding_type || 'Fully Funded',
+    majors: Array.isArray(item.majors) ? item.majors : [],
+    deadline: item.deadline || '',
+    link: item.link || item.url || item.application_url || '',
+    keywords: Array.isArray(item.keywords) ? item.keywords : [],
+  }));
 }

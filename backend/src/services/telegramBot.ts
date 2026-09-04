@@ -1,4 +1,5 @@
 import axios from 'axios';
+import mongoose from 'mongoose';
 import { Scholarship } from '../models/Scholarship';
 import { answerCallbackQuery, editMessageText, sendTelegramMessage } from './telegramService';
 import { sendEmail } from './emailService';
@@ -152,19 +153,48 @@ const handleCallbackQuery = async (callbackQuery: any) => {
 
   // ── Handle Hunt Accept/Reject ──────────────────────────────────────────────
   if (action === 'hunt_accept' || action === 'hunt_reject') {
-    const idx = parseInt(payload, 10);
+    let scholarshipData = pendingHuntScholarships.get(payload);
+    let scholarshipDoc: any = null;
 
-    if (isNaN(idx) || !pendingHuntScholarships.has(idx)) {
+    if (mongoose.Types.ObjectId.isValid(payload)) {
+      try {
+        scholarshipDoc = await Scholarship.findById(payload);
+        if (scholarshipDoc && !scholarshipData) {
+          scholarshipData = {
+            titleEn: scholarshipDoc.title.en,
+            titleAr: scholarshipDoc.title.ar,
+            universityEn: scholarshipDoc.university.en,
+            universityAr: scholarshipDoc.university.ar,
+            countryEn: scholarshipDoc.country.en,
+            countryAr: scholarshipDoc.country.ar,
+            fundingType: scholarshipDoc.fundingType,
+            degree: scholarshipDoc.degree,
+            deadline: scholarshipDoc.deadline,
+            link: scholarshipDoc.link,
+            descriptionEn: scholarshipDoc.description.en,
+            descriptionAr: scholarshipDoc.description.ar,
+          };
+        }
+      } catch (e: any) {
+        console.warn('[Hunt Callback] DB lookup failed:', e.message);
+      }
+    }
+
+    if (!scholarshipDoc && !scholarshipData) {
       await answerCallbackQuery(id, 'المنحة لم تعد متاحة');
       return;
     }
 
-    const scholarshipData = pendingHuntScholarships.get(idx)!;
-    pendingHuntScholarships.delete(idx);
+    pendingHuntScholarships.delete(payload);
 
     if (action === 'hunt_reject') {
+      if (scholarshipDoc) {
+        scholarshipDoc.status = 'rejected';
+        await scholarshipDoc.save();
+      }
+      const title = scholarshipData?.titleEn || scholarshipDoc?.title?.en || 'المنحة';
       const newText = [
-        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        `🎓 <b>${escapeHtml(title)}</b>`,
         '',
         '❌ <b>تم الرفض</b>',
       ].join('\n');
@@ -174,21 +204,20 @@ const handleCallbackQuery = async (callbackQuery: any) => {
       return;
     }
 
-    // Accept flow: save to DB + generate promo content
+    // Accept flow: save/approve in DB + generate promo content
     await answerCallbackQuery(id, 'جاري الحفظ وتوليد المحتوى الترويجي...');
     await editMessageText(chatId, messageId, '⏳ <b>جاري الحفظ في قاعدة البيانات وتوليد المحتوى الترويجي...</b>');
 
     try {
-      const saved = await saveAcceptedScholarship(scholarshipData);
+      const saved = await saveAcceptedScholarship(scholarshipDoc || scholarshipData);
+      const title = saved.title.en || scholarshipData?.titleEn || 'المنحة';
 
       const newText = [
-        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        `🎓 <b>${escapeHtml(title)}</b>`,
         '',
-        '✅ <b>تم القبول والحفظ في قاعدة البيانات</b>',
+        '✅ <b>تم القبول والحفظ والمحتوى الترويجي جاهز!</b>',
         '',
         `🔗 <a href="${SITE_URL}/scholarships/${saved._id}">عرض على الموقع</a>`,
-        '',
-        '⏳ <b>جاري توليد المحتوى الترويجي...</b>',
       ].join('\n');
 
       await editMessageText(chatId, messageId, newText);
@@ -220,23 +249,15 @@ const handleCallbackQuery = async (callbackQuery: any) => {
         '📋 Copy the text above and paste it on WhatsApp & Facebook',
       ].join('\n'));
 
-      // Final confirmation
-      await editMessageText(chatId, messageId, [
-        `🎓 <b>${scholarshipData.titleEn}</b>`,
-        '',
-        '✅ <b>تم القبول والحفظ والمحتوى الترويجي جاهز!</b>',
-        '',
-        `🔗 <a href="${SITE_URL}/scholarships/${saved._id}">عرض على الموقع</a>`,
-      ].join('\n'));
-
     } catch (error: any) {
       console.error('[Hunt Accept] Error:', error.message);
+      const title = scholarshipData?.titleEn || 'المنحة';
       await editMessageText(chatId, messageId, [
-        `🎓 <b>${scholarshipData.titleEn}</b>`,
+        `🎓 <b>${escapeHtml(title)}</b>`,
         '',
         '❌ <b>حدث خطأ أثناء الحفظ</b>',
         '',
-        `الخطأ: ${error.message?.substring(0, 100)}`,
+        `الخطأ: ${escapeHtml(error.message?.substring(0, 100))}`,
       ].join('\n'));
     }
 

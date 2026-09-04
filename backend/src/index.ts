@@ -4,6 +4,7 @@ dotenv.config();
 // Force IPv4 to prevent ENETUNREACH errors on networks without full IPv6 support
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
+try { dns.setServers(['8.8.8.8', '1.1.1.1']); } catch {}
 
 import app from './app';
 import { connectDB } from './config/db';
